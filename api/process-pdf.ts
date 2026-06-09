@@ -12,6 +12,10 @@ Asegúrate de retornar ESTRICTAMENTE un objeto JSON con la siguiente estructura,
   "semanas": [
     {
       "fecha_lunes": "YYYY-MM-DD",
+      "lectura_semanal": "string", // Nombre del libro de la lectura semanal, ej. "PROVERBIOS 29"
+      "cancion_inicio": "string", // Número de canción de inicio de la reunión (solo el número o "Canción XX"), ej. "Canción 28"
+      "cancion_intermedia": "string", // Número de la canción intermedia que va en medio de la reunión (dentro de Nuestra Vida Cristiana), ej. "Canción 159"
+      "cancion_conclusion": "string", // Número de la canción de conclusión, ej. "Canción 31"
       "partes": [
         {
           "tipo_asignacion": "string", // Valores permitidos: 'discurso_tesoros', 'buscar_perlas', 'lectura_biblia', 'empiece_conversaciones', 'haga_revisitas', 'haga_discipulos', 'explique_creencias', 'que_diria', 'discurso_estudiantil', 'vida_cristiana', 'conductor_estudio'
@@ -31,19 +35,24 @@ Tu tarea es extraer absolutamente TODAS las semanas y TODAS sus partes de la reu
 
 Reglas estrictas:
 1. Formatea la fecha de cada lunes en YYYY-MM-DD.
-2. NUNCA inventes nombres de asignaciones. Usa EXACTAMENTE el texto del documento. Si el texto viene pegado (ej. "Busquemosperlasescondidas"), sepáralo correctamente con espacios ("Busquemos perlas escondidas").
-3. Conserva estrictamente el orden secuencial de aparición de las asignaciones tal como se listan en el PDF para cada semana.
-4. Sección "Tesoros de la Biblia" ('seccion': 'tesoros'):
+2. Identifica la lectura de la Biblia semanal correspondiente a esa semana (ej. "PROVERBIOS 29", "PROVERBIOS 30").
+3. Identifica las tres canciones para la semana:
+   - La canción de inicio (habitualmente al inicio del programa o del texto de la semana).
+   - La canción intermedia (habitualmente al inicio de la sección Nuestra Vida Cristiana, ej. "Canción 159" o "Canción 80").
+   - La canción de conclusión (al final del programa de la semana).
+4. NUNCA inventes nombres de asignaciones. Usa EXACTAMENTE el texto del documento. Si el texto viene pegado (ej. "Busquemosperlasescondidas"), sepáralo correctamente con espacios ("Busquemos perlas escondidas").
+5. Conserva strictly el orden secuencial de aparición de las asignaciones tal como se listan en el PDF para cada semana.
+6. Sección "Tesoros de la Biblia" ('seccion': 'tesoros'):
    - Extrae Discurso de 10 min -> tipo_asignacion: 'discurso_tesoros', es_ayudante: false.
    - "Busquemos perlas escondidas" -> tipo_asignacion: 'buscar_perlas', es_ayudante: false. (NUNCA requiere ayudante).
    - "Lectura de la Biblia" -> tipo_asignacion: 'lectura_biblia', es_ayudante: false.
-5. Sección "Seamos Mejores Maestros" ('seccion': 'maestros'): En el PDF, cada asignación de esta sección viene numerada secuencialmente (ej. "4. Empiece conversaciones", "5. Empiece conversaciones", "6. Haga revisitas").
+7. Sección "Seamos Mejores Maestros" ('seccion': 'maestros'): En el PDF, cada asignación de esta sección viene numerada secuencialmente (ej. "4. Empiece conversaciones", "5. Empiece conversaciones", "6. Haga revisitas").
    - Extrae EXACTAMENTE las partes que aparezcan listadas con número en esa semana y respetando su cantidad (si hay dos, extrae dos). NO agregues partes que no existan en el texto de esa semana.
    - Clasifícalas como: 'empiece_conversaciones', 'haga_revisitas', 'haga_discipulos', 'explique_creencias', 'que_diria' o 'discurso_estudiantil'.
    - Determina es_ayudante basándote únicamente en estas reglas:
      * SÍ llevan ayudante (es_ayudante = true): 'empiece_conversaciones', 'haga_revisitas', 'haga_discipulos', 'explique_creencias'.
      * NO llevan ayudante (es_ayudante = false): 'que_diria', 'discurso_estudiantil'.
-6. Sección "Nuestra Vida Cristiana" ('seccion': 'vida'):
+8. Sección "Nuestra Vida Cristiana" ('seccion': 'vida'):
    - "Estudio Bíblico de la Congregación": Extrae esta parte como una sola asignación con tipo_asignacion: 'conductor_estudio', es_ayudante: true (esto indica que la aplicación asignará un Lector como ayudante/acompañante).
    - Otras partes de la sección (ej. Necesidades locales, "En esta campaña, ni un golpe al aire", "Logros de la organización", etc.): Clasifícalas como tipo_asignacion: 'vida_cristiana', es_ayudante: false. NO omitas ninguna parte y respeta el orden original.
 
@@ -82,9 +91,19 @@ ${schemaInstrucciones}
 
   if (!response.ok) {
     const errorText = await response.text();
-    const error: any = new Error(`[OpenAI API] Status ${response.status}: ${errorText}`);
+    let parsedError = '';
+    try {
+      const errorJson = JSON.parse(errorText);
+      parsedError = errorJson?.error?.message || errorText;
+    } catch {
+      parsedError = errorText;
+    }
+    const error: any = new Error(`[OpenAI API] Status ${response.status}: ${parsedError}`);
     error.status = response.status;
     error.isQuotaError = response.status === 429;
+    error.isAuthError = response.status === 401;
+    error.isPaymentError = response.status === 402;
+    error.openAiDetail = parsedError;
     throw error;
   }
 
@@ -161,12 +180,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     if (error.isQuotaError) {
       return res.status(429).json({
-        error: `Límite de OpenAI alcanzado (Rate Limit o Sin Saldo): ${error.message || error}`
+        error: `Límite de tasa de OpenAI alcanzado (429). Detalle: ${error.openAiDetail || error.message || error}`,
+        errorType: 'rate_limit'
+      });
+    }
+
+    if (error.isAuthError) {
+      return res.status(401).json({
+        error: `Error de autenticación con OpenAI (401). La API Key puede ser inválida o estar expirada. Detalle: ${error.openAiDetail || error.message || error}`,
+        errorType: 'auth_error'
+      });
+    }
+
+    if (error.isPaymentError) {
+      return res.status(402).json({
+        error: `Error de pago con OpenAI (402). Tu cuenta no tiene saldo suficiente. Detalle: ${error.openAiDetail || error.message || error}`,
+        errorType: 'payment_error'
       });
     }
 
     return res.status(500).json({
-      error: `Error interno del servidor al procesar el PDF con OpenAI: ${error.message || error}`
+      error: `Error al procesar el PDF: ${error.openAiDetail || error.message || error}`,
+      errorType: 'server_error'
     });
   }
 }

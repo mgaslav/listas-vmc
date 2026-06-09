@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { CargaPdfComponent } from '../carga-pdf/carga-pdf.component';
 import { PrevisualizacionSemanalComponent } from '../previsualizacion-semanal/previsualizacion-semanal.component';
 import { SupabaseService } from '../../services/supabase.service';
-import { CandidatoRotacion, SemanaAsignaciones, HistorialAsignacion } from '../../models/supabase.models';
+import { CandidatoRotacion, SemanaAsignaciones, HistorialAsignacion, FilaAsignacion } from '../../models/supabase.models';
 
 @Component({
   selector: 'app-planificador',
@@ -85,11 +85,10 @@ export class PlanificadorComponent implements OnInit {
       
       if (errorMsg.includes('Unexpected token') || errorMsg.includes('is not valid JSON') || errorMsg.includes('<!DOCTYPE') || errorMsg.includes('Cannot POST')) {
         errorMsg = 'Error de conexión con el servidor. Asegúrate de ejecutar el proyecto con "npx vercel dev" en lugar de "ng serve" para que el procesamiento funcione correctamente.';
-      } else if (errorMsg.includes('429') || errorMsg.includes('OpenAI') && errorMsg.includes('Límite')) {
-        errorMsg = 'Tu cuenta de OpenAI ha alcanzado el límite de rate limit o no tiene saldo suficiente. Por favor, verifica tu facturación en platform.openai.com.';
       } else if (errorMsg.includes('OPENAI_API_KEY') || errorMsg.includes('API Key de OpenAI no está configurada')) {
-        errorMsg = 'No has configurado la OPENAI_API_KEY en tu archivo .env. Asegúrate de que el archivo .env tenga tu clave de OpenAI y reinicia el servidor.';
+        errorMsg = 'No has configurado la OPENAI_API_KEY en tu archivo .env o en las variables de entorno de Vercel. Asegúrate de que tu clave de OpenAI esté configurada y reinicia el servidor.';
       }
+      // Para todos los demás errores de OpenAI, mostramos el mensaje real del servidor
 
       this.errorMessage = errorMsg;
       this.step = 'upload';
@@ -113,29 +112,69 @@ export class PlanificadorComponent implements OnInit {
   private mapearRespuestaGemini(respuesta: any): SemanaAsignaciones[] {
     const semanasGemini = respuesta.semanas || [];
     return semanasGemini.map((sem: any) => {
+      const partesMapeadas = (sem.partes || []).map((part: any) => {
+        const isBrotherOnly = [
+          'discurso_tesoros',
+          'buscar_perlas',
+          'lectura_biblia',
+          'discurso_estudiantil',
+          'vida_cristiana',
+          'conductor_estudio',
+          'lector_estudio',
+          'presidente',
+          'oracion_inicio',
+          'oracion_conclusion'
+        ].includes(part.tipo_asignacion);
+
+        return {
+          tipo_asignacion: part.tipo_asignacion,
+          etiqueta: part.etiqueta,
+          id_participante: '',
+          es_ayudante_obligatorio: part.es_ayudante,
+          filtro_aptitud: part.tipo_asignacion,
+          genero_requerido: isBrotherOnly ? 'Hombre' as const : undefined,
+          seccion: part.seccion
+        };
+      });
+
+      const asignaciones: FilaAsignacion[] = [
+        {
+          tipo_asignacion: 'presidente',
+          etiqueta: 'Presidente de la reunión',
+          id_participante: '',
+          es_ayudante_obligatorio: false,
+          filtro_aptitud: 'presidente',
+          genero_requerido: 'Hombre',
+          seccion: 'introduccion'
+        },
+        {
+          tipo_asignacion: 'oracion_inicio',
+          etiqueta: 'Oración de Inicio',
+          id_participante: '',
+          es_ayudante_obligatorio: false,
+          filtro_aptitud: 'oracion_inicio',
+          genero_requerido: 'Hombre',
+          seccion: 'introduccion'
+        },
+        ...partesMapeadas,
+        {
+          tipo_asignacion: 'oracion_conclusion',
+          etiqueta: 'Oración de conclusión',
+          id_participante: '',
+          es_ayudante_obligatorio: false,
+          filtro_aptitud: 'oracion_conclusion',
+          genero_requerido: 'Hombre',
+          seccion: 'conclusion'
+        }
+      ];
+
       return {
         fecha_lunes: sem.fecha_lunes,
-        asignaciones: (sem.partes || []).map((part: any) => {
-          const isBrotherOnly = [
-            'discurso_tesoros',
-            'buscar_perlas',
-            'lectura_biblia',
-            'discurso_estudiantil',
-            'vida_cristiana',
-            'conductor_estudio',
-            'lector_estudio'
-          ].includes(part.tipo_asignacion);
-
-          return {
-            tipo_asignacion: part.tipo_asignacion,
-            etiqueta: part.etiqueta,
-            id_participante: '',
-            es_ayudante_obligatorio: part.es_ayudante,
-            filtro_aptitud: part.tipo_asignacion,
-            genero_requerido: isBrotherOnly ? 'Hombre' : undefined,
-            seccion: part.seccion
-          };
-        })
+        lectura_semanal: sem.lectura_semanal,
+        cancion_inicio: sem.cancion_inicio,
+        cancion_intermedia: sem.cancion_intermedia,
+        cancion_conclusion: sem.cancion_conclusion,
+        asignaciones: asignaciones
       };
     });
   }
