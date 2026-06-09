@@ -40,9 +40,9 @@ export class AdministracionParticipantesComponent implements OnInit {
   // Form Models
   formParticipante: Omit<Participante, 'id'> = {
     nombre_completo: '',
-    grupo_edad: 'Mayor',
-    genero: 'Hombre',
-    rol: 'Publicador',
+    grupo_edad: '' as any,
+    genero: '' as any,
+    rol: '' as any,
     condicion_especial: false,
     observaciones: '',
     activo: true
@@ -124,9 +124,9 @@ export class AdministracionParticipantesComponent implements OnInit {
     this.selectedId = null;
     this.formParticipante = {
       nombre_completo: '',
-      grupo_edad: 'Mayor',
-      genero: 'Hombre',
-      rol: 'Publicador',
+      grupo_edad: '' as any,
+      genero: '' as any,
+      rol: '' as any,
       condicion_especial: false,
       observaciones: '',
       activo: true
@@ -187,32 +187,101 @@ export class AdministracionParticipantesComponent implements OnInit {
   }
 
   onGeneroChange(): void {
-    this.verificarAptitudesExclusivas();
+    this.onDropdownChange();
   }
 
   onGrupoEdadChange(): void {
-    this.verificarAptitudesExclusivas();
+    this.onDropdownChange();
+  }
+
+  onDropdownChange(): void {
+    this.aplicarPredeterminados();
+  }
+
+  isFormValid(): boolean {
+    return !!this.formParticipante.nombre_completo?.trim() &&
+           !!this.formParticipante.grupo_edad &&
+           !!this.formParticipante.genero &&
+           !!this.formParticipante.rol;
+  }
+
+  isAptitudAvailable(aptitud: keyof AptitudesParticipante): boolean {
+    if (!this.isFormValid()) return false;
+
+    const g = this.formParticipante.genero;
+    const e = this.formParticipante.grupo_edad;
+    const r = this.formParticipante.rol;
+    const c = this.formParticipante.condicion_especial;
+
+    // Quien tenga activada la casilla “Condición especial” solo debe de tener disponible y activado “Ayudante”
+    if (c) {
+      return aptitud === 'ayudante';
+    }
+
+    // “Menor de edad” solo debe de tener disponible y marcado las asignaciones de Seamos mejores maestros, a excepción de “¿Qué diría?”
+    if (e === 'Menor') {
+      const isMaestros = ['empiece_conversaciones', 'haga_revisitas', 'haga_discipulos', 'explique_creencias', 'discurso_estudiantil', 'ayudante'].includes(aptitud);
+      if (!isMaestros || aptitud === 'que_diria') return false;
+    }
+
+    // Género - “Mujer”: solo debe de tener disponible y marcado las asignaciones de Seamos mejores maestros menos “¿Qué diría?” y “Discurso (Maestros)”
+    if (g === 'Mujer') {
+      const isMaestros = ['empiece_conversaciones', 'haga_revisitas', 'haga_discipulos', 'explique_creencias', 'ayudante'].includes(aptitud);
+      if (!isMaestros) return false;
+    }
+
+    // Privilegios:
+    // “Anciano”: todas las asignaciones (no filtra nada adicional)
+    if (r === 'Siervo Ministerial') {
+      // “Siervo ministerial”: todas las asignaciones de las secciones Tesoros de la Biblia y de Seamos mejores maestros.
+      const isTesorosOrMaestros = [
+        'discurso_tesoros', 'buscar_perlas', 'lectura_biblia',
+        'empiece_conversaciones', 'haga_revisitas', 'haga_discipulos', 'explique_creencias', 'que_diria', 'discurso_estudiantil', 'ayudante'
+      ].includes(aptitud);
+      if (!isTesorosOrMaestros) return false;
+    } else if (r === 'Publicador') {
+      // “Publicador”: Solo todas las asignaciones de la sección Seamos mejores maestros. La asignación de “Lectura de la Biblia” en Tesoros y “Lector de Estudio” en Vida.
+      const allowed = [
+        'empiece_conversaciones', 'haga_revisitas', 'haga_discipulos', 'explique_creencias', 'que_diria', 'discurso_estudiantil', 'ayudante',
+        'lectura_biblia', 'lector_estudio'
+      ];
+      if (!allowed.includes(aptitud)) return false;
+    } else if (r === 'Publicador No Bautizado') {
+      // “Publicador no bautizado”: Todas las asignaciones de seamos mejores maestros, menos “¿Qué diría?”.
+      const isMaestros = ['empiece_conversaciones', 'haga_revisitas', 'haga_discipulos', 'explique_creencias', 'discurso_estudiantil', 'ayudante'].includes(aptitud);
+      if (!isMaestros || aptitud === 'que_diria') return false;
+    }
+
+    return true;
+  }
+
+  aplicarPredeterminados(): void {
+    if (!this.isFormValid()) {
+      // Si no es válido el formulario, desmarcar todo
+      for (const key of Object.keys(this.formAptitudes) as (keyof Omit<AptitudesParticipante, 'id_participante'>)[]) {
+        this.formAptitudes[key] = false;
+      }
+      return;
+    }
+
+    // Activar por defecto todas las asignaciones disponibles/permitidas
+    for (const key of Object.keys(this.formAptitudes) as (keyof Omit<AptitudesParticipante, 'id_participante'>)[]) {
+      this.formAptitudes[key] = this.isAptitudAvailable(key);
+    }
   }
 
   verificarAptitudesExclusivas(): void {
-    if (this.formParticipante.genero !== 'Hombre') {
-      this.formAptitudes.discurso_tesoros = false;
-      this.formAptitudes.buscar_perlas = false;
-      this.formAptitudes.lectura_biblia = false;
-      this.formAptitudes.discurso_estudiantil = false;
-      this.formAptitudes.vida_cristiana = false;
-      this.formAptitudes.conductor_estudio = false;
-      this.formAptitudes.lector_estudio = false;
-      this.formAptitudes.que_diria = false;
-    }
-    if (this.formParticipante.grupo_edad !== 'Mayor') {
-      this.formAptitudes.que_diria = false;
+    // Limpieza final antes de guardar, asegura consistencia total
+    for (const key of Object.keys(this.formAptitudes) as (keyof Omit<AptitudesParticipante, 'id_participante'>)[]) {
+      if (!this.isAptitudAvailable(key)) {
+        this.formAptitudes[key] = false;
+      }
     }
   }
 
   async guardar(): Promise<void> {
-    if (!this.formParticipante.nombre_completo.trim()) {
-      alert('El nombre completo es obligatorio');
+    if (!this.isFormValid()) {
+      alert('Por favor complete todos los campos obligatorios: Nombre completo, Grupo de edad, Género y Privilegio.');
       return;
     }
 

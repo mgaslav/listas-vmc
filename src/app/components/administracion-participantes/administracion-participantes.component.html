@@ -294,6 +294,7 @@
             <input
               type="text"
               [(ngModel)]="formParticipante.nombre_completo"
+              (input)="onDropdownChange()"
               placeholder="Ej. Juan Pérez"
               class="w-full bg-white border border-jw-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-jw-accent/30 focus:border-jw-accent transition-all font-medium text-jw-text"
             />
@@ -307,6 +308,7 @@
               (change)="onGrupoEdadChange()"
               class="w-full bg-white border border-jw-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-jw-accent/30 focus:border-jw-accent transition-all font-medium text-jw-text cursor-pointer"
             >
+              <option value="" disabled selected>Seleccionar edad...</option>
               <option value="Mayor">Mayor / Adulto</option>
               <option value="Menor">Menor de edad</option>
             </select>
@@ -320,6 +322,7 @@
               (change)="onGeneroChange()"
               class="w-full bg-white border border-jw-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-jw-accent/30 focus:border-jw-accent transition-all font-medium text-jw-text cursor-pointer"
             >
+              <option value="" disabled selected>Seleccionar género...</option>
               <option value="Hombre">Hombre</option>
               <option value="Mujer">Mujer</option>
             </select>
@@ -331,8 +334,10 @@
             <select
               name="rol"
               [(ngModel)]="formParticipante.rol"
+              (change)="onDropdownChange()"
               required class="w-full bg-white border border-jw-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-jw-accent/30 focus:border-jw-accent transition-all font-medium text-jw-text cursor-pointer"
             >
+              <option value="" disabled selected>Seleccionar privilegio...</option>
               <option value="Anciano">Anciano</option>
               <option value="Siervo Ministerial">Siervo Ministerial</option>
               <option value="Publicador">Publicador</option>
@@ -357,6 +362,7 @@
               <input
                 type="checkbox"
                 [(ngModel)]="formParticipante.condicion_especial"
+                (change)="onDropdownChange()"
                 class="rounded border-jw-border text-jw-accent focus:ring-jw-accent h-4 w-4 cursor-pointer"
               />
               <span>Condición Especial (Mayor / Limitaciones de Salud)</span>
@@ -377,33 +383,42 @@
 
           <!-- Category: Tesoros de la Biblia -->
           <div class="mb-6">
-            <h4 class="text-xs font-bold text-jw-accent mb-3 uppercase tracking-wider">Tesoros de la Biblia</h4>
+            <h4 class="text-xs font-bold text-[#29727d] mb-3 uppercase tracking-wider">Tesoros de la Biblia</h4>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group" [class.opacity-40]="formParticipante.genero !== 'Hombre'">
+              <label 
+                [ngClass]="isAptitudAvailable('discurso_tesoros') ? 'border-[#29727d]/20 bg-[#29727d]/5 hover:bg-[#29727d]/10 text-[#29727d]' : 'bg-jw-card/50 opacity-40 cursor-not-allowed'"
+                class="relative flex items-center p-3 rounded-2xl border border-jw-border-light cursor-pointer transition-colors group"
+              >
                 <div class="flex items-center h-5">
-                  <input type="checkbox" [disabled]="formParticipante.genero !== 'Hombre'" [(ngModel)]="formAptitudes.discurso_tesoros" class="w-4.5 h-4.5 border-jw-border rounded text-sky-500 focus:ring-sky-500 disabled:cursor-not-allowed">
+                  <input type="checkbox" [disabled]="!isAptitudAvailable('discurso_tesoros')" [(ngModel)]="formAptitudes.discurso_tesoros" class="w-4.5 h-4.5 border-jw-border rounded accent-[#29727d] disabled:cursor-not-allowed">
                 </div>
                 <div class="ml-3 text-sm">
                   <span class="font-semibold text-jw-text group-hover:text-jw-text transition-colors block text-xs">Discurso (Tesoros)</span>
-                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="formParticipante.genero !== 'Hombre'">Discurso 10 min. Solo varones.</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="!isAptitudAvailable('discurso_tesoros')">Discurso 10 min. Solo varones.</span>
                 </div>
               </label>
-              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group" [class.opacity-40]="formParticipante.genero !== 'Hombre'">
+              <label 
+                [ngClass]="isAptitudAvailable('buscar_perlas') ? 'border-[#29727d]/20 bg-[#29727d]/5 hover:bg-[#29727d]/10 text-[#29727d]' : 'bg-jw-card/50 opacity-40 cursor-not-allowed'"
+                class="relative flex items-center p-3 rounded-2xl border border-jw-border-light cursor-pointer transition-colors group"
+              >
                 <div class="flex items-center h-5">
-                  <input type="checkbox" [disabled]="formParticipante.genero !== 'Hombre'" [(ngModel)]="formAptitudes.buscar_perlas" class="w-4.5 h-4.5 border-jw-border rounded text-emerald-500 focus:ring-emerald-500 disabled:cursor-not-allowed">
+                  <input type="checkbox" [disabled]="!isAptitudAvailable('buscar_perlas')" [(ngModel)]="formAptitudes.buscar_perlas" class="w-4.5 h-4.5 border-jw-border rounded accent-[#29727d] disabled:cursor-not-allowed">
                 </div>
                 <div class="ml-3 text-sm">
                   <span class="font-semibold text-jw-text group-hover:text-jw-text transition-colors block text-xs">Busquemos perlas escondidas</span>
-                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="formParticipante.genero !== 'Hombre'">Conductor de Perlas. Solo varones.</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="!isAptitudAvailable('buscar_perlas')">Conductor de Perlas. Solo varones.</span>
                 </div>
               </label>
-              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group" [class.opacity-40]="formParticipante.genero !== 'Hombre'">
+              <label 
+                [ngClass]="isAptitudAvailable('lectura_biblia') ? 'border-[#29727d]/20 bg-[#29727d]/5 hover:bg-[#29727d]/10 text-[#29727d]' : 'bg-jw-card/50 opacity-40 cursor-not-allowed'"
+                class="relative flex items-center p-3 rounded-2xl border border-jw-border-light cursor-pointer transition-colors group"
+              >
                 <div class="flex items-center h-5">
-                  <input type="checkbox" [disabled]="formParticipante.genero !== 'Hombre'" [(ngModel)]="formAptitudes.lectura_biblia" class="w-4.5 h-4.5 border-jw-border rounded text-blue-500 focus:ring-blue-500 disabled:cursor-not-allowed">
+                  <input type="checkbox" [disabled]="!isAptitudAvailable('lectura_biblia')" [(ngModel)]="formAptitudes.lectura_biblia" class="w-4.5 h-4.5 border-jw-border rounded accent-[#29727d] disabled:cursor-not-allowed">
                 </div>
                 <div class="ml-3 text-sm">
                   <span class="font-semibold text-jw-text group-hover:text-jw-text transition-colors block text-xs">Lectura de la Biblia</span>
-                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="formParticipante.genero !== 'Hombre'">Lectura semanal. Solo varones.</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="!isAptitudAvailable('lectura_biblia')">Lectura semanal.</span>
                 </div>
               </label>
             </div>
@@ -411,65 +426,86 @@
 
           <!-- Category: Seamos mejores maestros -->
           <div class="mb-6 border-t border-jw-border-light pt-5">
-            <h4 class="text-xs font-bold text-jw-accent mb-3 uppercase tracking-wider">Seamos mejores maestros</h4>
+            <h4 class="text-xs font-bold text-[#d38322] mb-3 uppercase tracking-wider">Seamos mejores maestros</h4>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group">
+              <label 
+                [ngClass]="isAptitudAvailable('empiece_conversaciones') ? 'border-[#d38322]/20 bg-[#d38322]/5 hover:bg-[#d38322]/10 text-[#d38322]' : 'bg-jw-card/50 opacity-40 cursor-not-allowed'"
+                class="relative flex items-center p-3 rounded-2xl border border-jw-border-light cursor-pointer transition-colors group"
+              >
                 <div class="flex items-center h-5">
-                  <input type="checkbox" [(ngModel)]="formAptitudes.empiece_conversaciones" class="w-4.5 h-4.5 border-jw-border rounded text-amber-500 focus:ring-amber-500">
+                  <input type="checkbox" [disabled]="!isAptitudAvailable('empiece_conversaciones')" [(ngModel)]="formAptitudes.empiece_conversaciones" class="w-4.5 h-4.5 border-jw-border rounded accent-[#d38322] disabled:cursor-not-allowed">
                 </div>
                 <div class="ml-3 text-sm">
                   <span class="font-semibold text-jw-text block text-xs">Empiece conversaciones</span>
                   <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5">Primera conversación</span>
                 </div>
               </label>
-              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group">
+              <label 
+                [ngClass]="isAptitudAvailable('haga_revisitas') ? 'border-[#d38322]/20 bg-[#d38322]/5 hover:bg-[#d38322]/10 text-[#d38322]' : 'bg-jw-card/50 opacity-40 cursor-not-allowed'"
+                class="relative flex items-center p-3 rounded-2xl border border-jw-border-light cursor-pointer transition-colors group"
+              >
                 <div class="flex items-center h-5">
-                  <input type="checkbox" [(ngModel)]="formAptitudes.haga_revisitas" class="w-4.5 h-4.5 border-jw-border rounded text-orange-500 focus:ring-orange-500">
+                  <input type="checkbox" [disabled]="!isAptitudAvailable('haga_revisitas')" [(ngModel)]="formAptitudes.haga_revisitas" class="w-4.5 h-4.5 border-jw-border rounded accent-[#d38322] disabled:cursor-not-allowed">
                 </div>
                 <div class="ml-3 text-sm">
                   <span class="font-semibold text-jw-text block text-xs">Haga revisitas</span>
                   <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5">Asignación de revisita</span>
                 </div>
               </label>
-              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group">
+              <label 
+                [ngClass]="isAptitudAvailable('haga_discipulos') ? 'border-[#d38322]/20 bg-[#d38322]/5 hover:bg-[#d38322]/10 text-[#d38322]' : 'bg-jw-card/50 opacity-40 cursor-not-allowed'"
+                class="relative flex items-center p-3 rounded-2xl border border-jw-border-light cursor-pointer transition-colors group"
+              >
                 <div class="flex items-center h-5">
-                  <input type="checkbox" [(ngModel)]="formAptitudes.haga_discipulos" class="w-4.5 h-4.5 border-jw-border rounded text-rose-500 focus:ring-rose-500">
+                  <input type="checkbox" [disabled]="!isAptitudAvailable('haga_discipulos')" [(ngModel)]="formAptitudes.haga_discipulos" class="w-4.5 h-4.5 border-jw-border rounded accent-[#d38322] disabled:cursor-not-allowed">
                 </div>
                 <div class="ml-3 text-sm">
                   <span class="font-semibold text-jw-text block text-xs">Haga discípulos</span>
                   <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5">Curso bíblico</span>
                 </div>
               </label>
-              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group">
+              <label 
+                [ngClass]="isAptitudAvailable('explique_creencias') ? 'border-[#d38322]/20 bg-[#d38322]/5 hover:bg-[#d38322]/10 text-[#d38322]' : 'bg-jw-card/50 opacity-40 cursor-not-allowed'"
+                class="relative flex items-center p-3 rounded-2xl border border-jw-border-light cursor-pointer transition-colors group"
+              >
                 <div class="flex items-center h-5">
-                  <input type="checkbox" [(ngModel)]="formAptitudes.explique_creencias" class="w-4.5 h-4.5 border-jw-border rounded text-teal-500 focus:ring-teal-500">
+                  <input type="checkbox" [disabled]="!isAptitudAvailable('explique_creencias')" [(ngModel)]="formAptitudes.explique_creencias" class="w-4.5 h-4.5 border-jw-border rounded accent-[#d38322] disabled:cursor-not-allowed">
                 </div>
                 <div class="ml-3 text-sm">
                   <span class="font-semibold text-jw-text block text-xs">Explique sus creencias</span>
                   <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5">Asignación de creencias</span>
                 </div>
               </label>
-              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group" [class.opacity-40]="formParticipante.genero !== 'Hombre' || formParticipante.grupo_edad !== 'Mayor'">
+              <label 
+                [ngClass]="isAptitudAvailable('que_diria') ? 'border-[#d38322]/20 bg-[#d38322]/5 hover:bg-[#d38322]/10 text-[#d38322]' : 'bg-jw-card/50 opacity-40 cursor-not-allowed'"
+                class="relative flex items-center p-3 rounded-2xl border border-jw-border-light cursor-pointer transition-colors group"
+              >
                 <div class="flex items-center h-5">
-                  <input type="checkbox" [disabled]="formParticipante.genero !== 'Hombre' || formParticipante.grupo_edad !== 'Mayor'" [(ngModel)]="formAptitudes.que_diria" class="w-4.5 h-4.5 border-jw-border rounded text-cyan-500 focus:ring-cyan-500 disabled:cursor-not-allowed">
+                  <input type="checkbox" [disabled]="!isAptitudAvailable('que_diria')" [(ngModel)]="formAptitudes.que_diria" class="w-4.5 h-4.5 border-jw-border rounded accent-[#d38322] disabled:cursor-not-allowed">
                 </div>
                 <div class="ml-3 text-sm">
                   <span class="font-semibold text-jw-text block text-xs">¿Qué diría?</span>
-                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="formParticipante.genero !== 'Hombre' || formParticipante.grupo_edad !== 'Mayor'">Demostración (solo varones mayores)</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="!isAptitudAvailable('que_diria')">Demostración (solo varones mayores)</span>
                 </div>
               </label>
-              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group" [class.opacity-40]="formParticipante.genero !== 'Hombre'">
+              <label 
+                [ngClass]="isAptitudAvailable('discurso_estudiantil') ? 'border-[#d38322]/20 bg-[#d38322]/5 hover:bg-[#d38322]/10 text-[#d38322]' : 'bg-jw-card/50 opacity-40 cursor-not-allowed'"
+                class="relative flex items-center p-3 rounded-2xl border border-jw-border-light cursor-pointer transition-colors group"
+              >
                 <div class="flex items-center h-5">
-                  <input type="checkbox" [disabled]="formParticipante.genero !== 'Hombre'" [(ngModel)]="formAptitudes.discurso_estudiantil" class="w-4.5 h-4.5 border-jw-border rounded text-indigo-500 focus:ring-indigo-500 disabled:cursor-not-allowed">
+                  <input type="checkbox" [disabled]="!isAptitudAvailable('discurso_estudiantil')" [(ngModel)]="formAptitudes.discurso_estudiantil" class="w-4.5 h-4.5 border-jw-border rounded accent-[#d38322] disabled:cursor-not-allowed">
                 </div>
                 <div class="ml-3 text-sm">
                   <span class="font-semibold text-jw-text group-hover:text-jw-text transition-colors block text-xs">Discurso (Maestros)</span>
-                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="formParticipante.genero !== 'Hombre'">Discurso 5 min. Solo varones.</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="!isAptitudAvailable('discurso_estudiantil')">Discurso 5 min. Solo varones.</span>
                 </div>
               </label>
-              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group">
+              <label 
+                [ngClass]="isAptitudAvailable('ayudante') ? 'border-[#d38322]/20 bg-[#d38322]/5 hover:bg-[#d38322]/10 text-[#d38322]' : 'bg-jw-card/50 opacity-40 cursor-not-allowed'"
+                class="relative flex items-center p-3 rounded-2xl border border-jw-border-light cursor-pointer transition-colors group"
+              >
                 <div class="flex items-center h-5">
-                  <input type="checkbox" [(ngModel)]="formAptitudes.ayudante" class="w-4.5 h-4.5 border-jw-border rounded text-lime-500 focus:ring-lime-500">
+                  <input type="checkbox" [disabled]="!isAptitudAvailable('ayudante')" [(ngModel)]="formAptitudes.ayudante" class="w-4.5 h-4.5 border-jw-border rounded accent-[#d38322] disabled:cursor-not-allowed">
                 </div>
                 <div class="ml-3 text-sm">
                   <span class="font-semibold text-jw-text block text-xs">Ayudante</span>
@@ -481,33 +517,42 @@
 
           <!-- Category: Nuestra vida cristiana -->
           <div class="border-t border-jw-border-light pt-5">
-            <h4 class="text-xs font-bold text-jw-accent mb-3 uppercase tracking-wider">Nuestra vida cristiana</h4>
+            <h4 class="text-xs font-bold text-[#bd271a] mb-3 uppercase tracking-wider">Nuestra vida cristiana</h4>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group" [class.opacity-40]="formParticipante.genero !== 'Hombre'">
+              <label 
+                [ngClass]="isAptitudAvailable('vida_cristiana') ? 'border-[#bd271a]/20 bg-[#bd271a]/5 hover:bg-[#bd271a]/10 text-[#bd271a]' : 'bg-jw-card/50 opacity-40 cursor-not-allowed'"
+                class="relative flex items-center p-3 rounded-2xl border border-jw-border-light cursor-pointer transition-colors group"
+              >
                 <div class="flex items-center h-5">
-                  <input type="checkbox" [disabled]="formParticipante.genero !== 'Hombre'" [(ngModel)]="formAptitudes.vida_cristiana" class="w-4.5 h-4.5 border-jw-border rounded text-purple-500 focus:ring-purple-500 disabled:cursor-not-allowed">
+                  <input type="checkbox" [disabled]="!isAptitudAvailable('vida_cristiana')" [(ngModel)]="formAptitudes.vida_cristiana" class="w-4.5 h-4.5 border-jw-border rounded accent-[#bd271a] disabled:cursor-not-allowed">
                 </div>
                 <div class="ml-3 text-sm">
                   <span class="font-semibold text-jw-text block text-xs">Nuestra vida cristiana</span>
-                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="formParticipante.genero !== 'Hombre'">Partes de la sección. Solo varones.</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="!isAptitudAvailable('vida_cristiana')">Partes de la sección. Solo varones.</span>
                 </div>
               </label>
-              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group" [class.opacity-40]="formParticipante.genero !== 'Hombre'">
+              <label 
+                [ngClass]="isAptitudAvailable('conductor_estudio') ? 'border-[#bd271a]/20 bg-[#bd271a]/5 hover:bg-[#bd271a]/10 text-[#bd271a]' : 'bg-jw-card/50 opacity-40 cursor-not-allowed'"
+                class="relative flex items-center p-3 rounded-2xl border border-jw-border-light cursor-pointer transition-colors group"
+              >
                 <div class="flex items-center h-5">
-                  <input type="checkbox" [disabled]="formParticipante.genero !== 'Hombre'" [(ngModel)]="formAptitudes.conductor_estudio" class="w-4.5 h-4.5 border-jw-border rounded text-red-500 focus:ring-red-500 disabled:cursor-not-allowed">
+                  <input type="checkbox" [disabled]="!isAptitudAvailable('conductor_estudio')" [(ngModel)]="formAptitudes.conductor_estudio" class="w-4.5 h-4.5 border-jw-border rounded accent-[#bd271a] disabled:cursor-not-allowed">
                 </div>
                 <div class="ml-3 text-sm">
                   <span class="font-semibold text-jw-text block text-xs">Conductor de Estudio</span>
-                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="formParticipante.genero !== 'Hombre'">Conductor del EBC. Solo varones.</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="!isAptitudAvailable('conductor_estudio')">Conductor del EBC. Solo varones.</span>
                 </div>
               </label>
-              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group" [class.opacity-40]="formParticipante.genero !== 'Hombre'">
+              <label 
+                [ngClass]="isAptitudAvailable('lector_estudio') ? 'border-[#bd271a]/20 bg-[#bd271a]/5 hover:bg-[#bd271a]/10 text-[#bd271a]' : 'bg-jw-card/50 opacity-40 cursor-not-allowed'"
+                class="relative flex items-center p-3 rounded-2xl border border-jw-border-light cursor-pointer transition-colors group"
+              >
                 <div class="flex items-center h-5">
-                  <input type="checkbox" [disabled]="formParticipante.genero !== 'Hombre'" [(ngModel)]="formAptitudes.lector_estudio" class="w-4.5 h-4.5 border-jw-border rounded text-amber-500 focus:ring-amber-500 disabled:cursor-not-allowed">
+                  <input type="checkbox" [disabled]="!isAptitudAvailable('lector_estudio')" [(ngModel)]="formAptitudes.lector_estudio" class="w-4.5 h-4.5 border-jw-border rounded accent-[#bd271a] disabled:cursor-not-allowed">
                 </div>
                 <div class="ml-3 text-sm">
                   <span class="font-semibold text-jw-text block text-xs">Lector de Estudio</span>
-                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="formParticipante.genero !== 'Hombre'">Lector del EBC. Solo varones.</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="!isAptitudAvailable('lector_estudio')">Lector del EBC.</span>
                 </div>
               </label>
             </div>
