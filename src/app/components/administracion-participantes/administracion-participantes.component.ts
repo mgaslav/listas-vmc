@@ -186,11 +186,38 @@ export class AdministracionParticipantesComponent implements OnInit {
     this.showFormModal = false;
   }
 
+  onGeneroChange(): void {
+    this.verificarAptitudesExclusivas();
+  }
+
+  onGrupoEdadChange(): void {
+    this.verificarAptitudesExclusivas();
+  }
+
+  verificarAptitudesExclusivas(): void {
+    if (this.formParticipante.genero !== 'Hombre') {
+      this.formAptitudes.discurso_tesoros = false;
+      this.formAptitudes.buscar_perlas = false;
+      this.formAptitudes.lectura_biblia = false;
+      this.formAptitudes.discurso_estudiantil = false;
+      this.formAptitudes.vida_cristiana = false;
+      this.formAptitudes.conductor_estudio = false;
+      this.formAptitudes.lector_estudio = false;
+      this.formAptitudes.que_diria = false;
+    }
+    if (this.formParticipante.grupo_edad !== 'Mayor') {
+      this.formAptitudes.que_diria = false;
+    }
+  }
+
   async guardar(): Promise<void> {
     if (!this.formParticipante.nombre_completo.trim()) {
       alert('El nombre completo es obligatorio');
       return;
     }
+
+    // Limpiar aptitudes exclusivas
+    this.verificarAptitudesExclusivas();
 
     this.isLoading = true;
     this.errorMessage = null;

@@ -119,6 +119,12 @@ export class PrevisualizacionSemanalComponent implements OnInit {
         return false;
       }
 
+      // Rule: "Necesidades de la congregación" / "Necesidades locales" always assigned to an Elder (Anciano)
+      const labelLower = (fila.etiqueta || '').toLowerCase();
+      if (labelLower.includes('necesidades de la congregación') || labelLower.includes('necesidades locales')) {
+        if (c.rol !== 'Anciano') return false;
+      }
+
       return true;
     });
 
@@ -205,9 +211,13 @@ export class PrevisualizacionSemanalComponent implements OnInit {
 
           // Helper assignment (if applicable and selected)
           if (fila.es_ayudante_obligatorio && fila.id_ayudante) {
+            let tipoAsig = `${fila.tipo_asignacion}_ayudante`;
+            if (fila.filtro_aptitud === 'conductor_estudio') {
+              tipoAsig = 'lector_estudio';
+            }
             finalAsignaciones.push({
               id_participante: fila.id_ayudante,
-              tipo_asignacion: `${fila.tipo_asignacion}_ayudante`,
+              tipo_asignacion: tipoAsig,
               fecha_reunion: semana.fecha_lunes,
               es_ayudante: true
             });
@@ -282,7 +292,8 @@ export class PrevisualizacionSemanalComponent implements OnInit {
         }
       }
 
-      doc.save("Programa_VMC.pdf");
+      // Guardar PDF de forma nativa utilizando el método de descarga nativo de jsPDF
+      doc.save('Programa_VMC.pdf');
     } catch (error) {
       console.error("Error al generar el PDF:", error);
       alert("Hubo un problema al generar el PDF. Asegúrate de tener la extensión correctamente cargada.");

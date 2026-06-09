@@ -128,6 +128,10 @@
                         {{ c.nombre_completo }} ({{ c.genero === 'Hombre' ? 'H' : 'M' }} - {{ c.rol }})
                       </option>
                     </select>
+                    <!-- Note for study lector -->
+                    <div *ngIf="fila.id_ayudante && fila.filtro_aptitud === 'conductor_estudio'" class="text-[11px] text-[#29727d] font-semibold mt-1 flex items-center space-x-1">
+                      <span class="px-1.5 py-0.5 bg-[#29727d]/10 rounded border border-[#29727d]/20">Lector del Estudio</span>
+                    </div>
                   </div>
                   <ng-template #noHelper>
                     <span class="text-xs text-jw-text-secondary italic px-2">No aplica ayudante</span>
@@ -208,6 +212,10 @@
                         {{ c.nombre_completo }} ({{ c.genero === 'Hombre' ? 'H' : 'M' }} - {{ c.rol }})
                       </option>
                     </select>
+                    <!-- Note for study lector -->
+                    <div *ngIf="fila.id_ayudante && fila.filtro_aptitud === 'conductor_estudio'" class="text-[11px] text-[#d38322] font-semibold mt-1 flex items-center space-x-1">
+                      <span class="px-1.5 py-0.5 bg-[#d38322]/10 rounded border border-[#d38322]/20">Lector del Estudio</span>
+                    </div>
                   </div>
                   <ng-template #noHelper>
                     <span class="text-xs text-jw-text-secondary italic px-2">No aplica ayudante</span>
@@ -288,6 +296,10 @@
                         {{ c.nombre_completo }} ({{ c.genero === 'Hombre' ? 'H' : 'M' }} - {{ c.rol }})
                       </option>
                     </select>
+                    <!-- Note for study lector -->
+                    <div *ngIf="fila.id_ayudante && fila.filtro_aptitud === 'conductor_estudio'" class="text-[11px] text-[#bd271a] font-semibold mt-1 flex items-center space-x-1">
+                      <span class="px-1.5 py-0.5 bg-[#bd271a]/10 rounded border border-[#bd271a]/20">Lector del Estudio</span>
+                    </div>
                   </div>
                   <ng-template #noHelper>
                     <span class="text-xs text-jw-text-secondary italic px-2">No aplica ayudante</span>

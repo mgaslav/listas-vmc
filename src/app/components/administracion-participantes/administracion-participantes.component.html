@@ -304,6 +304,7 @@
             <label class="text-xs font-semibold text-jw-text-secondary">Grupo de Edad</label>
             <select
               [(ngModel)]="formParticipante.grupo_edad"
+              (change)="onGrupoEdadChange()"
               class="w-full bg-white border border-jw-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-jw-accent/30 focus:border-jw-accent transition-all font-medium text-jw-text cursor-pointer"
             >
               <option value="Mayor">Mayor / Adulto</option>
@@ -316,6 +317,7 @@
             <label class="text-xs font-semibold text-jw-text-secondary">Género</label>
             <select
               [(ngModel)]="formParticipante.genero"
+              (change)="onGeneroChange()"
               class="w-full bg-white border border-jw-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-jw-accent/30 focus:border-jw-accent transition-all font-medium text-jw-text cursor-pointer"
             >
               <option value="Hombre">Hombre</option>
@@ -447,13 +449,13 @@
                   <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5">Asignación de creencias</span>
                 </div>
               </label>
-              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group">
+              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group" [class.opacity-40]="formParticipante.genero !== 'Hombre' || formParticipante.grupo_edad !== 'Mayor'">
                 <div class="flex items-center h-5">
-                  <input type="checkbox" [(ngModel)]="formAptitudes.que_diria" class="w-4.5 h-4.5 border-jw-border rounded text-cyan-500 focus:ring-cyan-500">
+                  <input type="checkbox" [disabled]="formParticipante.genero !== 'Hombre' || formParticipante.grupo_edad !== 'Mayor'" [(ngModel)]="formAptitudes.que_diria" class="w-4.5 h-4.5 border-jw-border rounded text-cyan-500 focus:ring-cyan-500 disabled:cursor-not-allowed">
                 </div>
                 <div class="ml-3 text-sm">
                   <span class="font-semibold text-jw-text block text-xs">¿Qué diría?</span>
-                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5">Demostración (solo adultos)</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="formParticipante.genero !== 'Hombre' || formParticipante.grupo_edad !== 'Mayor'">Demostración (solo varones mayores)</span>
                 </div>
               </label>
               <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group" [class.opacity-40]="formParticipante.genero !== 'Hombre'">
