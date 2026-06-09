@@ -1,28 +1,50 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 const pdfParse = require('pdf-parse');
 
-const OPENAI_MODEL = 'gpt-4o-mini';
+const OPENAI_MODEL = 'gpt-4o';
 
-async function callOpenAI(apiKey: string, pdfText: string): Promise<any> {
-  const openAiUrl = 'https://api.openai.com/v1/chat/completions';
+/**
+ * Splits the PDF text into chunks, each containing approximately `weeksPerChunk` weeks.
+ * Weeks are delimited by date patterns like "X de month" or specific week header patterns.
+ */
+function splitPdfByWeeks(pdfText: string, weeksPerChunk: number = 2): string[] {
+  // Match typical VMC week delimiters: "X-Y de month" or "X de month"  
+  const weekPattern = /(?=\d{1,2}(?:\s*[-–]\s*\d{1,2})?\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre))/gi;
+  
+  const matches = [...pdfText.matchAll(weekPattern)];
+  
+  if (matches.length <= 1) {
+    // Can't split reliably, return the whole text
+    return [pdfText];
+  }
 
-  const schemaInstrucciones = `
+  const chunks: string[] = [];
+  for (let i = 0; i < matches.length; i += weeksPerChunk) {
+    const startIdx = matches[i].index!;
+    const endIdx = (i + weeksPerChunk < matches.length) ? matches[i + weeksPerChunk].index! : pdfText.length;
+    chunks.push(pdfText.slice(startIdx, endIdx));
+  }
+
+  return chunks;
+}
+
+const schemaInstrucciones = `
 Asegúrate de retornar ESTRICTAMENTE un objeto JSON con la siguiente estructura, sin markdown ni explicaciones adicionales:
 {
   "semanas": [
     {
       "fecha_lunes": "YYYY-MM-DD",
-      "lectura_semanal": "string", // Nombre del libro de la lectura semanal, ej. "PROVERBIOS 29"
-      "cancion_inicio": "string", // Número de canción de inicio de la reunión (solo el número o "Canción XX"), ej. "Canción 28"
-      "cancion_intermedia": "string", // Número de la canción intermedia que va en medio de la reunión (dentro de Nuestra Vida Cristiana), ej. "Canción 159"
-      "cancion_conclusion": "string", // Número de la canción de conclusión, ej. "Canción 31"
+      "lectura_semanal": "string",
+      "cancion_inicio": "string",
+      "cancion_intermedia": "string",
+      "cancion_conclusion": "string",
       "partes": [
         {
-          "tipo_asignacion": "string", // Valores permitidos: 'discurso_tesoros', 'buscar_perlas', 'lectura_biblia', 'empiece_conversaciones', 'haga_revisitas', 'haga_discipulos', 'explique_creencias', 'que_diria', 'discurso_estudiantil', 'vida_cristiana', 'conductor_estudio'
-          "etiqueta": "string", // Título exacto de la parte (con espacios corregidos si vienen pegados)
-          "seccion": "string", // 'tesoros', 'maestros' o 'vida'
-          "es_ayudante": boolean, // true si requiere ayudante, false si no lo requiere
-          "sugerencia_nombre_completo": "string" // Opcional
+          "tipo_asignacion": "string",
+          "etiqueta": "string",
+          "seccion": "string",
+          "es_ayudante": boolean,
+          "sugerencia_nombre_completo": "string"
         }
       ]
     }
@@ -30,7 +52,7 @@ Asegúrate de retornar ESTRICTAMENTE un objeto JSON con la siguiente estructura,
 }
 `;
 
-  const promptText = `Analiza detalladamente el siguiente texto extraído de la Guía de Actividades para la reunión Vida y Ministerio Cristianos (VMC).
+const promptInstructions = `Analiza detalladamente el siguiente texto extraído de la Guía de Actividades para la reunión Vida y Ministerio Cristianos (VMC).
 Tu tarea es extraer absolutamente TODAS las semanas y TODAS sus partes de la reunión conservando de forma estricta el orden de aparición original.
 
 Reglas estrictas:
@@ -53,8 +75,14 @@ Reglas estrictas:
      * SÍ llevan ayudante (es_ayudante = true): 'empiece_conversaciones', 'haga_revisitas', 'haga_discipulos', 'explique_creencias'.
      * NO llevan ayudante (es_ayudante = false): 'que_diria', 'discurso_estudiantil'.
 8. Sección "Nuestra Vida Cristiana" ('seccion': 'vida'):
-   - "Estudio Bíblico de la Congregación": Extrae esta parte como una sola asignación con tipo_asignacion: 'conductor_estudio', es_ayudante: true (esto indica que la aplicación asignará un Lector como ayudante/acompañante).
+   - "Estudio Bíblico de la Congregación": Extrae esta parte como una sola asignación con tipo_asignacion: 'conductor_estudio', es_ayudante: true. SIEMPRE debe ser la ÚLTIMA parte de la sección 'vida'. Si hay otras partes de vida cristiana, el estudio bíblico va al final.
    - Otras partes de la sección (ej. Necesidades locales, "En esta campaña, ni un golpe al aire", "Logros de la organización", etc.): Clasifícalas como tipo_asignacion: 'vida_cristiana', es_ayudante: false. NO omitas ninguna parte y respeta el orden original.
+   - IMPORTANTE: El orden dentro de 'vida' debe ser: primero las partes de vida_cristiana, y al FINAL el conductor_estudio.`;
+
+async function callOpenAI(apiKey: string, pdfText: string): Promise<any> {
+  const openAiUrl = 'https://api.openai.com/v1/chat/completions';
+
+  const promptText = `${promptInstructions}
 
 Aquí está el texto extraído del PDF:
 """
@@ -169,11 +197,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'No se pudo extraer texto del PDF (probablemente es una imagen escaneada sin OCR).' });
     }
 
-    console.log(`Texto extraído exitosamente (${pdfText.length} caracteres). Enviando a OpenAI (${OPENAI_MODEL})...`);
-    const result = await callOpenAI(apiKey, pdfText);
-    
-    console.log(`✅ Procesamiento con OpenAI exitoso`);
-    return res.status(200).json(result);
+    console.log(`Texto extraído exitosamente (${pdfText.length} caracteres). Dividiendo en chunks...`);
+
+    // Split the PDF text into manageable chunks to avoid gpt-4o TPM limits
+    const chunks = splitPdfByWeeks(pdfText, 2);
+    console.log(`PDF dividido en ${chunks.length} chunk(s). Procesando con OpenAI (${OPENAI_MODEL})...`);
+
+    const allSemanas: any[] = [];
+
+    for (let i = 0; i < chunks.length; i++) {
+      console.log(`Procesando chunk ${i + 1}/${chunks.length} (${chunks[i].length} caracteres)...`);
+      
+      const chunkResult = await callOpenAI(apiKey, chunks[i]);
+      
+      if (chunkResult.semanas && Array.isArray(chunkResult.semanas)) {
+        allSemanas.push(...chunkResult.semanas);
+      }
+
+      // Small delay between chunks to avoid rate limiting
+      if (i < chunks.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+
+    console.log(`✅ Procesamiento con OpenAI exitoso. ${allSemanas.length} semana(s) extraídas.`);
+    return res.status(200).json({ semanas: allSemanas });
 
   } catch (error: any) {
     console.error('Excepción en process-pdf serverless function:', error);

@@ -87,14 +87,16 @@ export class PrevisualizacionSemanalComponent implements OnInit {
     });
   }
 
-  getAsignacionesPorSeccion(semana: SemanaAsignaciones, seccion: 'tesoros' | 'maestros' | 'vida'): FilaAsignacion[] {
+  getAsignacionesPorSeccion(semana: SemanaAsignaciones, seccion: 'introduccion' | 'tesoros' | 'maestros' | 'vida' | 'conclusion'): FilaAsignacion[] {
     return (semana.asignaciones || []).filter(a => {
       const s = a.seccion || this.getSeccionFallback(a.tipo_asignacion);
       return s === seccion;
     });
   }
 
-  private getSeccionFallback(tipo: string): 'tesoros' | 'maestros' | 'vida' {
+  private getSeccionFallback(tipo: string): 'introduccion' | 'tesoros' | 'maestros' | 'vida' | 'conclusion' {
+    if (['presidente', 'oracion_inicio'].includes(tipo)) return 'introduccion';
+    if (['oracion_conclusion'].includes(tipo)) return 'conclusion';
     if (['discurso_tesoros', 'buscar_perlas', 'lectura_biblia'].includes(tipo)) return 'tesoros';
     if (['empiece_conversaciones', 'haga_revisitas', 'haga_discipulos', 'explique_creencias', 'que_diria', 'discurso_estudiantil'].includes(tipo)) return 'maestros';
     return 'vida';
@@ -108,6 +110,25 @@ export class PrevisualizacionSemanalComponent implements OnInit {
     const allEligible = this.candidatos.filter(c => {
       if (!c.activo) return false;
       
+      // For presidente, oracion_inicio, oracion_conclusion: use role-based rules as primary filter
+      // since these aptitude fields may not be configured yet in the DB
+      if (fila.filtro_aptitud === 'presidente') {
+        if (c.genero !== 'Hombre') return false;
+        if (c.rol !== 'Anciano' && c.rol !== 'Siervo Ministerial') return false;
+        // If the aptitude field exists and is explicitly false, skip
+        if (c.presidente === false) return false;
+        return true;
+      }
+      
+      if (fila.filtro_aptitud === 'oracion_inicio' || fila.filtro_aptitud === 'oracion_conclusion') {
+        if (c.genero !== 'Hombre') return false;
+        if (c.rol !== 'Anciano' && c.rol !== 'Siervo Ministerial' && c.rol !== 'Publicador') return false;
+        // If the aptitude field exists and is explicitly false, skip
+        const aptField = c[fila.filtro_aptitud as keyof CandidatoRotacion];
+        if (aptField === false) return false;
+        return true;
+      }
+
       // Map the string key to the matching boolean on the candidate object
       const hasAptitude = c[fila.filtro_aptitud as keyof CandidatoRotacion] === true;
       if (!hasAptitude) return false;
@@ -241,52 +262,145 @@ export class PrevisualizacionSemanalComponent implements OnInit {
       doc.setFont("helvetica");
       let yPos = 20;
 
-      // Título
-      doc.setFontSize(18);
-      doc.setTextColor(0, 113, 227); // Azul Apple
-      doc.text("Programa Vida y Ministerio Cristianos", 14, yPos);
-      yPos += 10;
+      // Título del Documento
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(29, 29, 31); // Negro suave
+      doc.text("Programa para la Reunión Vida y Ministerio Cristianos", 14, yPos);
+      yPos += 12;
 
       // Generar una tabla por cada semana
       for (const semana of this.semanas) {
-        // Título de la semana
-        doc.setFontSize(14);
-        doc.setTextColor(29, 29, 31); // Negro suave
-        doc.text(this.formatFechaSemana(semana.fecha_lunes), 14, yPos);
-        yPos += 5;
-
-        const bodyData = semana.asignaciones.map(fila => {
+        const weekRows = [];
+        
+        // 1. Cabecera de la semana
+        const lecturaText = semana.lectura_semanal ? `\nLECTURA SEMANAL DE LA BIBLIA: ${semana.lectura_semanal.toUpperCase()}` : '';
+        const dateText = this.formatFechaSemana(semana.fecha_lunes).toUpperCase();
+        const presidenteRow = semana.asignaciones.find(a => a.tipo_asignacion === 'presidente');
+        const presidenteName = presidenteRow ? (this.getCandidatoInfo(presidenteRow.id_participante)?.nombre_completo || "Por asignar") : "Por asignar";
+        
+        weekRows.push([
+          { content: `${dateText}${lecturaText}`, styles: { fontStyle: 'bold' as const, fontSize: 9, fillColor: [255, 255, 255] as [number, number, number], textColor: [0, 0, 0] as [number, number, number] } },
+          { content: `Presidente: ${presidenteName}`, styles: { fontStyle: 'bold' as const, fontSize: 10, fillColor: [255, 255, 255] as [number, number, number], textColor: [0, 0, 0] as [number, number, number], valign: 'middle' as const } }
+        ]);
+        
+        // 2. Canción de inicio y oración
+        const oracionInicioRow = semana.asignaciones.find(a => a.tipo_asignacion === 'oracion_inicio');
+        const oracionInicioName = oracionInicioRow ? (this.getCandidatoInfo(oracionInicioRow.id_participante)?.nombre_completo || "Por asignar") : "Por asignar";
+        const songInicioText = semana.cancion_inicio ? `• ${semana.cancion_inicio}` : '• Canción';
+        weekRows.push([
+          songInicioText,
+          { content: `Oración:   ${oracionInicioName}`, styles: { fontStyle: 'normal' as const } }
+        ]);
+        
+        // 3. Palabras de introducción
+        weekRows.push([
+          '• Palabras de introducción (1 min.)',
+          presidenteName
+        ]);
+        
+        // 4. Sección: Tesoros de la Biblia
+        weekRows.push([
+          { content: 'TESOROS DE LA BIBLIA', colSpan: 2, styles: { fillColor: [77, 77, 77] as [number, number, number], textColor: [255, 255, 255] as [number, number, number], fontStyle: 'bold' as const, fontSize: 9 } }
+        ]);
+        
+        // Filtrar y agregar Tesoros
+        const tesorosParts = semana.asignaciones.filter(a => a.seccion === 'tesoros' || (!a.seccion && this.getSeccionFallback(a.tipo_asignacion) === 'tesoros'));
+        for (const fila of tesorosParts) {
           const titular = this.getCandidatoInfo(fila.id_participante)?.nombre_completo || "Por asignar";
-          
-          let ayudanteStr = "";
-          if (fila.es_ayudante_obligatorio && fila.id_ayudante) {
-            const nombreAyudante = this.getCandidatoInfo(fila.id_ayudante)?.nombre_completo;
-            if (fila.filtro_aptitud === 'conductor_estudio') {
-              ayudanteStr = ` (Lector: ${nombreAyudante})`;
-            } else {
-              ayudanteStr = ` (Ayudante: ${nombreAyudante})`;
-            }
+          let cell2Text = titular;
+          let cell2Styles: any = {};
+          if (fila.tipo_asignacion === 'lectura_biblia') {
+            const ayudante = fila.es_ayudante_obligatorio && fila.id_ayudante ? (this.getCandidatoInfo(fila.id_ayudante)?.nombre_completo || "Por asignar") : "Por asignar";
+            cell2Text = `${titular} ------ ${ayudante}`;
+            cell2Styles = { halign: 'left' };
           }
-          
-          return [fila.etiqueta, `${titular}${ayudanteStr}`];
-        });
+          weekRows.push([
+            fila.etiqueta,
+            { content: cell2Text, styles: cell2Styles }
+          ]);
+        }
+        
+        // 5. Sección: Seamos mejores maestros
+        weekRows.push([
+          { content: 'SEAMOS MEJORES MAESTROS', colSpan: 2, styles: { fillColor: [196, 141, 0] as [number, number, number], textColor: [255, 255, 255] as [number, number, number], fontStyle: 'bold' as const, fontSize: 9 } }
+        ]);
+        
+        // Filtrar y agregar Maestros
+        const maestrosParts = semana.asignaciones.filter(a => a.seccion === 'maestros' || (!a.seccion && this.getSeccionFallback(a.tipo_asignacion) === 'maestros'));
+        for (const fila of maestrosParts) {
+          const titular = this.getCandidatoInfo(fila.id_participante)?.nombre_completo || "Por asignar";
+          let cell2Text = titular;
+          if (fila.es_ayudante_obligatorio && fila.id_ayudante) {
+            const ayudanteName = this.getCandidatoInfo(fila.id_ayudante)?.nombre_completo || "Por asignar";
+            cell2Text = `${titular} ------ ${ayudanteName}`;
+          }
+          weekRows.push([
+            fila.etiqueta,
+            cell2Text
+          ]);
+        }
+        
+        // 6. Sección: Nuestra vida cristiana
+        weekRows.push([
+          { content: 'NUESTRA VIDA CRISTIANA', colSpan: 2, styles: { fillColor: [124, 15, 42] as [number, number, number], textColor: [255, 255, 255] as [number, number, number], fontStyle: 'bold' as const, fontSize: 9 } }
+        ]);
+        
+        // Canción intermedia
+        const songIntermediaText = semana.cancion_intermedia ? `• ${semana.cancion_intermedia}` : '• Canción';
+        weekRows.push([
+          songIntermediaText,
+          ''
+        ]);
+        
+        // Filtrar y agregar Vida
+        const vidaParts = semana.asignaciones.filter(a => a.seccion === 'vida' || (!a.seccion && this.getSeccionFallback(a.tipo_asignacion) === 'vida'));
+        for (const fila of vidaParts) {
+          const titular = this.getCandidatoInfo(fila.id_participante)?.nombre_completo || "Por asignar";
+          let cell2Text = titular;
+          if (fila.tipo_asignacion === 'conductor_estudio') {
+            const lector = fila.id_ayudante ? (this.getCandidatoInfo(fila.id_ayudante)?.nombre_completo || "Por asignar") : "Por asignar";
+            cell2Text = `${titular} ------ ${lector}`;
+          }
+          weekRows.push([
+            fila.etiqueta,
+            cell2Text
+          ]);
+        }
+        
+        // 7. Palabras de conclusión
+        weekRows.push([
+          '• Palabras de conclusión (3 min.)',
+          presidenteName
+        ]);
+        
+        // 8. Canción de conclusión y oración
+        const oracionConclusionRow = semana.asignaciones.find(a => a.tipo_asignacion === 'oracion_conclusion');
+        const oracionConclusionName = oracionConclusionRow ? (this.getCandidatoInfo(oracionConclusionRow.id_participante)?.nombre_completo || "Por asignar") : "Por asignar";
+        const songConclusionText = semana.cancion_conclusion ? `• ${semana.cancion_conclusion}` : '• Canción';
+        weekRows.push([
+          songConclusionText,
+          { content: `Oración:   ${oracionConclusionName}`, styles: { fontStyle: 'normal' as const } }
+        ]);
 
         // @ts-ignore
         autoTable(doc, {
           startY: yPos,
-          head: [['Asignación', 'Participante']],
-          body: bodyData,
+          body: weekRows,
           theme: 'grid',
-          headStyles: { fillColor: [0, 113, 227], textColor: 255 },
-          styles: { fontSize: 10, cellPadding: 3 },
-          margin: { top: 10, right: 14, bottom: 10, left: 14 },
+          styles: { fontSize: 9, cellPadding: 2, font: "helvetica", textColor: [29, 29, 31] },
+          columnStyles: {
+            0: { cellWidth: 100 },
+            1: { cellWidth: 90 }
+          },
+          margin: { top: 10, right: 10, bottom: 10, left: 10 }
         });
 
         // @ts-ignore
         yPos = (doc as any).lastAutoTable.finalY + 15;
 
         // Si la próxima semana no cabe, añadir página
-        if (yPos > 250) {
+        if (yPos > 240) {
           doc.addPage();
           yPos = 20;
         }

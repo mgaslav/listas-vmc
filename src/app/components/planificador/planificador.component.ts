@@ -130,12 +130,23 @@ export class PlanificadorComponent implements OnInit {
           tipo_asignacion: part.tipo_asignacion,
           etiqueta: part.etiqueta,
           id_participante: '',
-          es_ayudante_obligatorio: part.es_ayudante,
+          es_ayudante_obligatorio: !!part.es_ayudante,
           filtro_aptitud: part.tipo_asignacion,
           genero_requerido: isBrotherOnly ? 'Hombre' as const : undefined,
           seccion: part.seccion
         };
       });
+
+      // Fix ordering: ensure conductor_estudio is always last within 'vida' section parts
+      const vidaParts = partesMapeadas.filter((p: any) => p.seccion === 'vida' && p.tipo_asignacion !== 'conductor_estudio');
+      const conductorParts = partesMapeadas.filter((p: any) => p.tipo_asignacion === 'conductor_estudio');
+      const otherParts = partesMapeadas.filter((p: any) => p.seccion !== 'vida' && p.tipo_asignacion !== 'conductor_estudio');
+      
+      const orderedPartes = [
+        ...otherParts,
+        ...vidaParts,
+        ...conductorParts
+      ];
 
       const asignaciones: FilaAsignacion[] = [
         {
@@ -156,7 +167,7 @@ export class PlanificadorComponent implements OnInit {
           genero_requerido: 'Hombre',
           seccion: 'introduccion'
         },
-        ...partesMapeadas,
+        ...orderedPartes,
         {
           tipo_asignacion: 'oracion_conclusion',
           etiqueta: 'Oración de conclusión',
