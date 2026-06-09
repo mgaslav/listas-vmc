@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 const pdfParse = require('pdf-parse');
 
-const OPENAI_MODEL = 'gpt-4o';
+const OPENAI_MODEL = 'gpt-4o-mini';
 
 async function callOpenAI(apiKey: string, pdfText: string): Promise<any> {
   const openAiUrl = 'https://api.openai.com/v1/chat/completions';
