@@ -28,6 +28,9 @@ export interface AptitudesParticipante {
   conductor_estudio: boolean;
   lector_estudio: boolean;
   ayudante: boolean;
+  presidente?: boolean;
+  oracion_inicio?: boolean;
+  oracion_conclusion?: boolean;
 }
 
 export interface HistorialAsignacion {
@@ -60,6 +63,9 @@ export interface CandidatoRotacion {
   conductor_estudio: boolean;
   lector_estudio: boolean;
   ayudante: boolean;
+  presidente?: boolean;
+  oracion_inicio?: boolean;
+  oracion_conclusion?: boolean;
   // Rotation tracker
   ultima_participacion: string | null; // YYYY-MM-DD (nullable)
 }
@@ -80,17 +86,25 @@ export interface FilaAsignacion {
   es_ayudante_obligatorio: boolean;
   filtro_aptitud: keyof AptitudesParticipante; // To filter potential candidates
   genero_requerido?: Genero; // Optional if gender restricted
-  seccion?: 'tesoros' | 'maestros' | 'vida';
+  seccion?: 'introduccion' | 'tesoros' | 'maestros' | 'vida' | 'conclusion';
 }
 
 export interface SemanaAsignaciones {
   fecha_lunes: string; // YYYY-MM-DD (the week identifier)
   asignaciones: FilaAsignacion[];
+  lectura_semanal?: string;
+  cancion_inicio?: string;
+  cancion_intermedia?: string;
+  cancion_conclusion?: string;
 }
 
 export interface RespuestaGemini {
   semanas: {
     fecha_lunes: string; // YYYY-MM-DD
+    lectura_semanal?: string;
+    cancion_inicio?: string;
+    cancion_intermedia?: string;
+    cancion_conclusion?: string;
     partes: {
       tipo_asignacion: string; // e.g., 'lectura_biblia', 'primera_conversacion', etc.
       etiqueta: string;

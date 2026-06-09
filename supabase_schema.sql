@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS participantes (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 4. Tabla de Aptitudes (Relación 1:1 con participantes - RECONFIGURADA CON LAS 10 APTITUDES)
+-- 4. Tabla de Aptitudes (Relación 1:1 con participantes - RECONFIGURADA CON LAS 13 APTITUDES)
 CREATE TABLE aptitudes_participante (
     id_participante UUID PRIMARY KEY REFERENCES participantes(id) ON DELETE CASCADE,
     discurso_tesoros BOOLEAN DEFAULT FALSE,       -- 1. Discurso (Tesoros de la Biblia)
@@ -38,7 +38,10 @@ CREATE TABLE aptitudes_participante (
     discurso_estudiantil BOOLEAN DEFAULT FALSE,   -- 7. Discurso (estudiantil)
     vida_cristiana BOOLEAN DEFAULT FALSE,         -- 8. Nuestra vida cristiana (asignaciones)
     conductor_estudio BOOLEAN DEFAULT FALSE,      -- 9. Conductor de Estudio
-    lector_estudio BOOLEAN DEFAULT FALSE          -- 10. Lector de Estudio
+    lector_estudio BOOLEAN DEFAULT FALSE,         -- 10. Lector de Estudio
+    presidente BOOLEAN DEFAULT FALSE,             -- 11. Presidente de la reunión
+    oracion_inicio BOOLEAN DEFAULT FALSE,         -- 12. Oración de Inicio
+    oracion_conclusion BOOLEAN DEFAULT FALSE      -- 13. Oración de Conclusión
 );
 
 -- 5. Tabla de Historial de Asignaciones (se mantiene si existe)
@@ -66,11 +69,17 @@ SELECT
     a.lectura_biblia,
     a.empiece_conversaciones,
     a.haga_revisitas,
+    a.haga_discipulos,
     a.explique_creencias,
+    a.que_diria,
     a.discurso_estudiantil,
     a.vida_cristiana,
     a.conductor_estudio,
     a.lector_estudio,
+    a.ayudante,
+    a.presidente,
+    a.oracion_inicio,
+    a.oracion_conclusion,
     MAX(h.fecha_reunion) AS ultima_participacion
 FROM participantes p
 LEFT JOIN aptitudes_participante a ON p.id = a.id_participante
@@ -89,11 +98,17 @@ GROUP BY
     a.lectura_biblia,
     a.empiece_conversaciones,
     a.haga_revisitas,
+    a.haga_discipulos,
     a.explique_creencias,
+    a.que_diria,
     a.discurso_estudiantil,
     a.vida_cristiana,
     a.conductor_estudio,
-    a.lector_estudio
+    a.lector_estudio,
+    a.ayudante,
+    a.presidente,
+    a.oracion_inicio,
+    a.oracion_conclusion
 ORDER BY ultima_participacion ASC NULLS FIRST;
 
 -- ==========================================

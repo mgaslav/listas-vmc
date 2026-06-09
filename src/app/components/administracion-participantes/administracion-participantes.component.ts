@@ -61,7 +61,10 @@ export class AdministracionParticipantesComponent implements OnInit {
     vida_cristiana: false,
     conductor_estudio: false,
     lector_estudio: false,
-    ayudante: false
+    ayudante: false,
+    presidente: false,
+    oracion_inicio: false,
+    oracion_conclusion: false
   };
 
   constructor(private supabaseService: SupabaseService, private cdr: ChangeDetectorRef) {}
@@ -144,7 +147,10 @@ export class AdministracionParticipantesComponent implements OnInit {
       vida_cristiana: false,
       conductor_estudio: false,
       lector_estudio: false,
-      ayudante: false
+      ayudante: false,
+      presidente: false,
+      oracion_inicio: false,
+      oracion_conclusion: false
     };
     this.showFormModal = true;
   }
@@ -176,7 +182,10 @@ export class AdministracionParticipantesComponent implements OnInit {
       vida_cristiana: item.aptitudes.vida_cristiana,
       conductor_estudio: item.aptitudes.conductor_estudio,
       lector_estudio: item.aptitudes.lector_estudio,
-      ayudante: item.aptitudes.ayudante || false
+      ayudante: item.aptitudes.ayudante || false,
+      presidente: item.aptitudes.presidente || false,
+      oracion_inicio: item.aptitudes.oracion_inicio || false,
+      oracion_conclusion: item.aptitudes.oracion_conclusion || false
     };
 
     this.showFormModal = true;
@@ -216,6 +225,14 @@ export class AdministracionParticipantesComponent implements OnInit {
     // Quien tenga activada la casilla “Condición especial” solo debe de tener disponible y activado “Ayudante”
     if (c) {
       return aptitud === 'ayudante';
+    }
+
+    if (aptitud === 'presidente') {
+      return g === 'Hombre' && (r === 'Anciano' || r === 'Siervo Ministerial');
+    }
+
+    if (aptitud === 'oracion_inicio' || aptitud === 'oracion_conclusion') {
+      return g === 'Hombre' && (r === 'Anciano' || r === 'Siervo Ministerial' || r === 'Publicador');
     }
 
     // “Menor de edad” solo debe de tener disponible y marcado las asignaciones de Seamos mejores maestros, a excepción de “¿Qué diría?”

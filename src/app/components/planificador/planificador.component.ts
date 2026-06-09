@@ -126,11 +126,21 @@ export class PlanificadorComponent implements OnInit {
           'oracion_conclusion'
         ].includes(part.tipo_asignacion);
 
+        // Force helper requirement based on type — don't rely on AI
+        const TYPES_REQUIRING_HELPER = [
+          'empiece_conversaciones',
+          'haga_revisitas',
+          'haga_discipulos',
+          'explique_creencias',
+          'conductor_estudio'
+        ];
+        const needsHelper = TYPES_REQUIRING_HELPER.includes(part.tipo_asignacion);
+
         return {
           tipo_asignacion: part.tipo_asignacion,
           etiqueta: part.etiqueta,
           id_participante: '',
-          es_ayudante_obligatorio: !!part.es_ayudante,
+          es_ayudante_obligatorio: needsHelper,
           filtro_aptitud: part.tipo_asignacion,
           genero_requerido: isBrotherOnly ? 'Hombre' as const : undefined,
           seccion: part.seccion

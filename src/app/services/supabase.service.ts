@@ -82,7 +82,10 @@ export class SupabaseService {
           vida_cristiana: false,
           conductor_estudio: false,
           lector_estudio: false,
-          ayudante: false
+          ayudante: false,
+          presidente: false,
+          oracion_inicio: false,
+          oracion_conclusion: false
         };
       }
 

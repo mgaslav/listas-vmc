@@ -46,3 +46,4 @@ Thumbs.db
 .env
 gemini.env
 *.env
+.env*

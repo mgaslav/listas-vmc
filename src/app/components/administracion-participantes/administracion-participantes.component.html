@@ -73,17 +73,22 @@
         </select>
         <select [(ngModel)]="filtroAsignacion" class="bg-white border border-jw-border rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-jw-accent/30 hover:border-jw-text-secondary/40 transition-all text-jw-text font-medium cursor-pointer">
           <option value="">Todas las Asignaciones</option>
+          <option value="presidente">Presidente de la reunión</option>
+          <option value="oracion_inicio">Oración de Inicio</option>
           <option value="discurso_tesoros">Tesoros: Discurso</option>
           <option value="buscar_perlas">Tesoros: Perlas</option>
           <option value="lectura_biblia">Tesoros: Lectura</option>
           <option value="empiece_conversaciones">Maestros: Conversaciones</option>
           <option value="haga_revisitas">Maestros: Revisitas</option>
+          <option value="haga_discipulos">Maestros: Discípulos</option>
           <option value="explique_creencias">Maestros: Creencias</option>
+          <option value="que_diria">Maestros: ¿Qué diría?</option>
           <option value="discurso_estudiantil">Maestros: Discurso</option>
           <option value="vida_cristiana">Vida Cristiana</option>
           <option value="conductor_estudio">Conductor Estudio</option>
           <option value="lector_estudio">Lector Estudio</option>
           <option value="ayudante">Ayudante</option>
+          <option value="oracion_conclusion">Oración de Conclusión</option>
         </select>
 
         <button 
@@ -237,8 +242,17 @@
           <span *ngIf="item.aptitudes.ayudante" class="px-2 py-0.5 bg-lime-50 border border-lime-200 text-lime-700 text-[10px] font-semibold rounded-md">
             Ayudante
           </span>
+          <span *ngIf="item.aptitudes.presidente" class="px-2 py-0.5 bg-slate-50 border border-slate-200 text-slate-700 text-[10px] font-semibold rounded-md">
+            Presidente
+          </span>
+          <span *ngIf="item.aptitudes.oracion_inicio" class="px-2 py-0.5 bg-slate-50 border border-slate-200 text-slate-700 text-[10px] font-semibold rounded-md">
+            Oración Inicio
+          </span>
+          <span *ngIf="item.aptitudes.oracion_conclusion" class="px-2 py-0.5 bg-slate-50 border border-slate-200 text-slate-700 text-[10px] font-semibold rounded-md">
+            Oración Conclusión
+          </span>
           
-          <span *ngIf="!item.aptitudes.discurso_tesoros && !item.aptitudes.buscar_perlas && !item.aptitudes.lectura_biblia && !item.aptitudes.empiece_conversaciones && !item.aptitudes.haga_revisitas && !item.aptitudes.explique_creencias && !item.aptitudes.discurso_estudiantil && !item.aptitudes.vida_cristiana && !item.aptitudes.conductor_estudio && !item.aptitudes.lector_estudio && !item.aptitudes.ayudante" class="text-xs text-jw-text-secondary/60 italic">
+          <span *ngIf="!item.aptitudes.discurso_tesoros && !item.aptitudes.buscar_perlas && !item.aptitudes.lectura_biblia && !item.aptitudes.empiece_conversaciones && !item.aptitudes.haga_revisitas && !item.aptitudes.explique_creencias && !item.aptitudes.discurso_estudiantil && !item.aptitudes.vida_cristiana && !item.aptitudes.conductor_estudio && !item.aptitudes.lector_estudio && !item.aptitudes.ayudante && !item.aptitudes.presidente && !item.aptitudes.oracion_inicio && !item.aptitudes.oracion_conclusion" class="text-xs text-jw-text-secondary/60 italic">
             Sin asignaciones activas
           </span>
         </div>
@@ -379,6 +393,37 @@
             <p class="text-xs text-jw-text-secondary">
               Marca las partes del programa en las que este hermano(a) tiene permitido participar.
             </p>
+          </div>
+
+          <!-- Category: Introducción -->
+          <div class="mb-6">
+            <h4 class="text-xs font-bold text-slate-600 mb-3 uppercase tracking-wider">Introducción</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label 
+                [ngClass]="isAptitudAvailable('presidente') ? 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700' : 'bg-jw-card/50 opacity-40 cursor-not-allowed'"
+                class="relative flex items-center p-3 rounded-2xl border border-jw-border-light cursor-pointer transition-colors group"
+              >
+                <div class="flex items-center h-5">
+                  <input type="checkbox" [disabled]="!isAptitudAvailable('presidente')" [(ngModel)]="formAptitudes.presidente" class="w-4.5 h-4.5 border-jw-border rounded accent-slate-600 disabled:cursor-not-allowed">
+                </div>
+                <div class="ml-3 text-sm">
+                  <span class="font-semibold text-jw-text block text-xs">Presidente de la reunión</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="!isAptitudAvailable('presidente')">Solo Ancianos y Siervos Ministeriales.</span>
+                </div>
+              </label>
+              <label 
+                [ngClass]="isAptitudAvailable('oracion_inicio') ? 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700' : 'bg-jw-card/50 opacity-40 cursor-not-allowed'"
+                class="relative flex items-center p-3 rounded-2xl border border-jw-border-light cursor-pointer transition-colors group"
+              >
+                <div class="flex items-center h-5">
+                  <input type="checkbox" [disabled]="!isAptitudAvailable('oracion_inicio')" [(ngModel)]="formAptitudes.oracion_inicio" class="w-4.5 h-4.5 border-jw-border rounded accent-slate-600 disabled:cursor-not-allowed">
+                </div>
+                <div class="ml-3 text-sm">
+                  <span class="font-semibold text-jw-text block text-xs">Oración de Inicio</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="!isAptitudAvailable('oracion_inicio')">Solo varones bautizados.</span>
+                </div>
+              </label>
+            </div>
           </div>
 
           <!-- Category: Tesoros de la Biblia -->
@@ -553,6 +598,25 @@
                 <div class="ml-3 text-sm">
                   <span class="font-semibold text-jw-text block text-xs">Lector de Estudio</span>
                   <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="!isAptitudAvailable('lector_estudio')">Lector del EBC.</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Category: Conclusión -->
+          <div class="border-t border-jw-border-light pt-5 mt-5">
+            <h4 class="text-xs font-bold text-slate-600 mb-3 uppercase tracking-wider">Conclusión</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label 
+                [ngClass]="isAptitudAvailable('oracion_conclusion') ? 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700' : 'bg-jw-card/50 opacity-40 cursor-not-allowed'"
+                class="relative flex items-center p-3 rounded-2xl border border-jw-border-light cursor-pointer transition-colors group"
+              >
+                <div class="flex items-center h-5">
+                  <input type="checkbox" [disabled]="!isAptitudAvailable('oracion_conclusion')" [(ngModel)]="formAptitudes.oracion_conclusion" class="w-4.5 h-4.5 border-jw-border rounded accent-slate-600 disabled:cursor-not-allowed">
+                </div>
+                <div class="ml-3 text-sm">
+                  <span class="font-semibold text-jw-text block text-xs">Oración de conclusión</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="!isAptitudAvailable('oracion_conclusion')">Solo varones bautizados.</span>
                 </div>
               </label>
             </div>
