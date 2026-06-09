@@ -1,0 +1,336 @@
+<div class="space-y-8 max-w-5xl mx-auto pb-16">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between border-b border-jw-border-light pb-5">
+    <div>
+      <h2 class="text-2xl font-bold text-jw-text">
+        Previsualización del Programa Propuesto
+      </h2>
+      <p class="text-sm text-jw-text-secondary mt-1">
+        Revisa las asignaciones propuestas y realiza ajustes basados en la rotación justa.
+      </p>
+    </div>
+    <div class="flex items-center space-x-3 mt-4 md:mt-0">
+      <button
+        type="button"
+        (click)="cancel.emit()"
+        class="px-5 py-2.5 bg-jw-card hover:bg-gray-200 text-jw-text font-semibold text-sm rounded-2xl border border-jw-border transition-all cursor-pointer"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        (click)="confirmarProgramacion()"
+        class="px-6 py-2.5 bg-jw-accent hover:bg-jw-accent-hover text-white font-semibold text-sm rounded-2xl shadow-sm transition-all cursor-pointer"
+      >
+        Guardar Programa
+      </button>
+    </div>
+  </div>
+
+  <!-- Weekly Accordion/Cards -->
+  <div class="space-y-6">
+    <!-- Low Candidates Warning -->
+    <div
+      *ngIf="totalCandidatosActivos < 5"
+      class="flex items-center space-x-3 p-4 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl text-sm animate-fade-in text-left"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <div>
+        <span class="font-bold block text-amber-800 text-xs">Pocos participantes registrados:</span>
+        <span class="text-xs text-amber-600 mt-0.5 block">
+          Tienes solo {{ totalCandidatosActivos }} participante(s) activo(s) configurado(s). Para una asignación y rotación óptima de la reunión, se sugiere registrar más hermanos con sus respectivas asignaciones en la sección "Participantes".
+        </span>
+      </div>
+    </div>
+    <div
+      *ngFor="let semana of semanas; let i = index"
+      class="bg-white border border-jw-border-light rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
+    >
+      <!-- Week Banner -->
+      <div class="px-6 py-4 bg-jw-card border-b border-jw-border-light flex justify-between items-center">
+        <span class="text-base font-bold text-jw-text">
+          {{ formatFechaSemana(semana.fecha_lunes) }}
+        </span>
+        <span class="px-3 py-1 bg-jw-accent/10 text-jw-accent text-xs font-semibold rounded-full border border-jw-accent/20">
+          {{ semana.asignaciones.length }} Asignaciones
+        </span>
+      </div>
+
+      <!-- Assignments Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-jw-border-light text-xs font-semibold uppercase text-jw-text-secondary">
+              <th class="px-6 py-3.5">Asignación / Parte</th>
+              <th class="px-6 py-3.5">Asignado Principal</th>
+              <th class="px-6 py-3.5">Ayudante / Acompañante</th>
+              <th class="px-6 py-3.5 text-right">Detalle Rotación</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-jw-border-light">
+            <!-- Sección: Tesoros de la Biblia -->
+            <ng-container *ngIf="getAsignacionesPorSeccion(semana, 'tesoros').length > 0">
+              <tr class="bg-[#29727d]/10 text-[#29727d] font-bold text-xs uppercase tracking-wider">
+                <td colspan="4" class="px-6 py-2.5">
+                  <div class="flex items-center space-x-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#29727d]"></span>
+                    <span>Tesoros de la Biblia</span>
+                  </div>
+                </td>
+              </tr>
+              <tr
+                *ngFor="let fila of getAsignacionesPorSeccion(semana, 'tesoros')"
+                class="hover:bg-jw-card/50 transition-colors"
+              >
+                <!-- Name & Section info -->
+                <td class="px-6 py-4 border-l-4 border-l-[#29727d]">
+                  <div class="font-semibold text-jw-text text-sm">
+                    {{ fila.etiqueta }}
+                  </div>
+                  <div class="text-[10px] text-jw-text-secondary mt-1.5 flex items-center space-x-1">
+                    <span>Requisito:</span>
+                    <span class="font-mono text-[10px] bg-[#29727d]/10 text-[#29727d] border border-[#29727d]/20 px-1.5 py-0.5 rounded">
+                      {{ fila.filtro_aptitud }}
+                    </span>
+                    <span *ngIf="fila.genero_requerido" class="font-mono text-[10px] bg-jw-accent/10 text-jw-accent border border-jw-accent/20 px-1.5 py-0.5 rounded">
+                      {{ fila.genero_requerido }}
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Main Assignee Select -->
+                <td class="px-4 md:px-6 py-4">
+                  <div class="relative w-full min-w-[14rem] max-w-sm">
+                    <select
+                      [(ngModel)]="fila.id_participante"
+                      (change)="onEstudianteChange(fila)"
+                      class="w-full bg-white border border-jw-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#29727d]/30 focus:border-[#29727d] transition-all font-medium text-jw-text shadow-sm cursor-pointer"
+                    >
+                      <option value="" disabled>Seleccionar participante...</option>
+                      <option *ngFor="let c of getCandidatosParaEstudiante(fila)" [value]="c.id_participante">
+                        {{ c.nombre_completo }} ({{ c.genero === 'Hombre' ? 'H' : 'M' }} - {{ c.rol }})
+                      </option>
+                    </select>
+                  </div>
+                </td>
+
+                <!-- Assistant Select -->
+                <td class="px-4 md:px-6 py-4">
+                  <div class="relative w-full min-w-[14rem] max-w-sm" *ngIf="fila.es_ayudante_obligatorio; else noHelper">
+                    <select
+                      [(ngModel)]="fila.id_ayudante"
+                      class="w-full bg-white border border-jw-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#29727d]/30 focus:border-[#29727d] transition-all font-medium text-jw-text shadow-sm cursor-pointer"
+                    >
+                      <option value="">{{ fila.filtro_aptitud === 'conductor_estudio' ? 'Sin lector asignado' : 'Sin ayudante asignado' }}</option>
+                      <option *ngFor="let c of getCandidatosParaAyudante(fila, fila.id_participante)" [value]="c.id_participante">
+                        {{ c.nombre_completo }} ({{ c.genero === 'Hombre' ? 'H' : 'M' }} - {{ c.rol }})
+                      </option>
+                    </select>
+                  </div>
+                  <ng-template #noHelper>
+                    <span class="text-xs text-jw-text-secondary italic px-2">No aplica ayudante</span>
+                  </ng-template>
+                </td>
+
+                <!-- Rotation info of current student -->
+                <td class="px-6 py-4 text-right">
+                  <div *ngIf="fila.id_participante" class="text-xs space-y-0.5">
+                    <div class="font-medium text-jw-text-secondary">
+                      Última participación:
+                    </div>
+                    <div class="font-semibold text-jw-accent">
+                      {{ getCandidatoInfo(fila.id_participante)?.ultima_participacion 
+                        ? (getCandidatoInfo(fila.id_participante)?.ultima_participacion)
+                        : 'Sin participaciones registradas' }}
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+
+            <!-- Sección: Seamos mejores maestros -->
+            <ng-container *ngIf="getAsignacionesPorSeccion(semana, 'maestros').length > 0">
+              <tr class="bg-[#d38322]/10 text-[#d38322] font-bold text-xs uppercase tracking-wider">
+                <td colspan="4" class="px-6 py-2.5">
+                  <div class="flex items-center space-x-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#d38322]"></span>
+                    <span>Seamos mejores maestros</span>
+                  </div>
+                </td>
+              </tr>
+              <tr
+                *ngFor="let fila of getAsignacionesPorSeccion(semana, 'maestros')"
+                class="hover:bg-jw-card/50 transition-colors"
+              >
+                <!-- Name & Section info -->
+                <td class="px-6 py-4 border-l-4 border-l-[#d38322]">
+                  <div class="font-semibold text-jw-text text-sm">
+                    {{ fila.etiqueta }}
+                  </div>
+                  <div class="text-[10px] text-jw-text-secondary mt-1.5 flex items-center space-x-1">
+                    <span>Requisito:</span>
+                    <span class="font-mono text-[10px] bg-[#d38322]/10 text-[#d38322] border border-[#d38322]/20 px-1.5 py-0.5 rounded">
+                      {{ fila.filtro_aptitud }}
+                    </span>
+                    <span *ngIf="fila.genero_requerido" class="font-mono text-[10px] bg-jw-accent/10 text-jw-accent border border-jw-accent/20 px-1.5 py-0.5 rounded">
+                      {{ fila.genero_requerido }}
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Main Assignee Select -->
+                <td class="px-4 md:px-6 py-4">
+                  <div class="relative w-full min-w-[14rem] max-w-sm">
+                    <select
+                      [(ngModel)]="fila.id_participante"
+                      (change)="onEstudianteChange(fila)"
+                      class="w-full bg-white border border-jw-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#d38322]/30 focus:border-[#d38322] transition-all font-medium text-jw-text shadow-sm cursor-pointer"
+                    >
+                      <option value="" disabled>Seleccionar participante...</option>
+                      <option *ngFor="let c of getCandidatosParaEstudiante(fila)" [value]="c.id_participante">
+                        {{ c.nombre_completo }} ({{ c.genero === 'Hombre' ? 'H' : 'M' }} - {{ c.rol }})
+                      </option>
+                    </select>
+                  </div>
+                </td>
+
+                <!-- Assistant Select -->
+                <td class="px-4 md:px-6 py-4">
+                  <div class="relative w-full min-w-[14rem] max-w-sm" *ngIf="fila.es_ayudante_obligatorio; else noHelper">
+                    <select
+                      [(ngModel)]="fila.id_ayudante"
+                      class="w-full bg-white border border-jw-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#d38322]/30 focus:border-[#d38322] transition-all font-medium text-jw-text shadow-sm cursor-pointer"
+                    >
+                      <option value="">{{ fila.filtro_aptitud === 'conductor_estudio' ? 'Sin lector asignado' : 'Sin ayudante asignado' }}</option>
+                      <option *ngFor="let c of getCandidatosParaAyudante(fila, fila.id_participante)" [value]="c.id_participante">
+                        {{ c.nombre_completo }} ({{ c.genero === 'Hombre' ? 'H' : 'M' }} - {{ c.rol }})
+                      </option>
+                    </select>
+                  </div>
+                  <ng-template #noHelper>
+                    <span class="text-xs text-jw-text-secondary italic px-2">No aplica ayudante</span>
+                  </ng-template>
+                </td>
+
+                <!-- Rotation info of current student -->
+                <td class="px-6 py-4 text-right">
+                  <div *ngIf="fila.id_participante" class="text-xs space-y-0.5">
+                    <div class="font-medium text-jw-text-secondary">
+                      Última participación:
+                    </div>
+                    <div class="font-semibold text-jw-accent">
+                      {{ getCandidatoInfo(fila.id_participante)?.ultima_participacion 
+                        ? (getCandidatoInfo(fila.id_participante)?.ultima_participacion)
+                        : 'Sin participaciones registradas' }}
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+
+            <!-- Sección: Nuestra vida cristiana -->
+            <ng-container *ngIf="getAsignacionesPorSeccion(semana, 'vida').length > 0">
+              <tr class="bg-[#bd271a]/10 text-[#bd271a] font-bold text-xs uppercase tracking-wider">
+                <td colspan="4" class="px-6 py-2.5">
+                  <div class="flex items-center space-x-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#bd271a]"></span>
+                    <span>Nuestra vida cristiana</span>
+                  </div>
+                </td>
+              </tr>
+              <tr
+                *ngFor="let fila of getAsignacionesPorSeccion(semana, 'vida')"
+                class="hover:bg-jw-card/50 transition-colors"
+              >
+                <!-- Name & Section info -->
+                <td class="px-6 py-4 border-l-4 border-l-[#bd271a]">
+                  <div class="font-semibold text-jw-text text-sm">
+                    {{ fila.etiqueta }}
+                  </div>
+                  <div class="text-[10px] text-jw-text-secondary mt-1.5 flex items-center space-x-1">
+                    <span>Requisito:</span>
+                    <span class="font-mono text-[10px] bg-[#bd271a]/10 text-[#bd271a] border border-[#bd271a]/20 px-1.5 py-0.5 rounded">
+                      {{ fila.filtro_aptitud }}
+                    </span>
+                    <span *ngIf="fila.genero_requerido" class="font-mono text-[10px] bg-jw-accent/10 text-jw-accent border border-jw-accent/20 px-1.5 py-0.5 rounded">
+                      {{ fila.genero_requerido }}
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Main Assignee Select -->
+                <td class="px-4 md:px-6 py-4">
+                  <div class="relative w-full min-w-[14rem] max-w-sm">
+                    <select
+                      [(ngModel)]="fila.id_participante"
+                      (change)="onEstudianteChange(fila)"
+                      class="w-full bg-white border border-jw-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#bd271a]/30 focus:border-[#bd271a] transition-all font-medium text-jw-text shadow-sm cursor-pointer"
+                    >
+                      <option value="" disabled>Seleccionar participante...</option>
+                      <option *ngFor="let c of getCandidatosParaEstudiante(fila)" [value]="c.id_participante">
+                        {{ c.nombre_completo }} ({{ c.genero === 'Hombre' ? 'H' : 'M' }} - {{ c.rol }})
+                      </option>
+                    </select>
+                  </div>
+                </td>
+
+                <!-- Assistant Select -->
+                <td class="px-4 md:px-6 py-4">
+                  <div class="relative w-full min-w-[14rem] max-w-sm" *ngIf="fila.es_ayudante_obligatorio; else noHelper">
+                    <select
+                      [(ngModel)]="fila.id_ayudante"
+                      class="w-full bg-white border border-jw-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#bd271a]/30 focus:border-[#bd271a] transition-all font-medium text-jw-text shadow-sm cursor-pointer"
+                    >
+                      <option value="">{{ fila.filtro_aptitud === 'conductor_estudio' ? 'Sin lector asignado' : 'Sin ayudante asignado' }}</option>
+                      <option *ngFor="let c of getCandidatosParaAyudante(fila, fila.id_participante)" [value]="c.id_participante">
+                        {{ c.nombre_completo }} ({{ c.genero === 'Hombre' ? 'H' : 'M' }} - {{ c.rol }})
+                      </option>
+                    </select>
+                  </div>
+                  <ng-template #noHelper>
+                    <span class="text-xs text-jw-text-secondary italic px-2">No aplica ayudante</span>
+                  </ng-template>
+                </td>
+
+                <!-- Rotation info of current student -->
+                <td class="px-6 py-4 text-right">
+                  <div *ngIf="fila.id_participante" class="text-xs space-y-0.5">
+                    <div class="font-medium text-jw-text-secondary">
+                      Última participación:
+                    </div>
+                    <div class="font-semibold text-jw-accent">
+                      {{ getCandidatoInfo(fila.id_participante)?.ultima_participacion 
+                        ? (getCandidatoInfo(fila.id_participante)?.ultima_participacion)
+                        : 'Sin participaciones registradas' }}
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom actions -->
+  <div class="flex justify-end items-center space-x-3 border-t border-jw-border-light pt-6">
+    <button
+      type="button"
+      (click)="cancel.emit()"
+      class="px-5 py-2.5 bg-jw-card hover:bg-gray-200 text-jw-text font-semibold text-sm rounded-2xl border border-jw-border transition-all cursor-pointer"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      (click)="confirmarProgramacion()"
+      class="px-8 py-3 bg-jw-accent hover:bg-jw-accent-hover text-white font-semibold text-sm rounded-2xl shadow-sm transition-all cursor-pointer"
+    >
+      Confirmar y Guardar Programa
+    </button>
+  </div>
+
+</div>

@@ -1,0 +1,578 @@
+<div class="space-y-6 max-w-6xl mx-auto pb-16">
+  
+  <!-- Header / Action bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-jw-border-light pb-5 space-y-4 sm:space-y-0">
+    <div>
+      <h2 class="text-2xl font-bold text-jw-text">
+        Gestión de Participantes
+      </h2>
+      <p class="text-sm text-jw-text-secondary mt-1">
+        Da de alta, edita los datos de los hermanos y configura sus asignaciones para el algoritmo de rotación.
+      </p>
+    </div>
+    
+    <button
+      type="button"
+      (click)="abrirCrearModal()"
+      class="px-5 py-2.5 bg-jw-accent hover:bg-jw-accent-hover text-white font-semibold text-sm rounded-2xl shadow-sm transition-all duration-300 flex items-center justify-center space-x-2 cursor-pointer self-start sm:self-auto"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+      </svg>
+      <span>Agregar Participante</span>
+    </button>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="isLoading && participantesConAptitudes.length === 0" class="flex flex-col items-center justify-center py-20 space-y-4">
+    <svg class="animate-spin h-8 w-8 text-jw-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+    <p class="text-sm text-jw-text-secondary font-medium">Cargando lista de participantes...</p>
+  </div>
+
+  <!-- Table Toolbar with Filters -->
+  <div class="px-5 py-4 bg-jw-card rounded-2xl border border-jw-border-light">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      
+      <!-- Search and Count -->
+      <div class="flex items-center space-x-4">
+        <div class="relative">
+          <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-jw-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input 
+            type="text" 
+            [(ngModel)]="searchTerm" 
+            placeholder="Buscar por nombre..." 
+            class="pl-9 pr-4 py-2 bg-white border border-jw-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-jw-accent/30 focus:border-jw-accent transition-all text-jw-text placeholder-jw-text-secondary/60 w-full md:w-64"
+          >
+        </div>
+        <span class="text-sm font-semibold text-jw-text-secondary">{{ participantesFiltrados.length }} Resultados</span>
+      </div>
+
+      <!-- Filters -->
+      <div class="flex flex-wrap items-center gap-2">
+        <select [(ngModel)]="filtroGrupoEdad" class="bg-white border border-jw-border rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-jw-accent/30 hover:border-jw-text-secondary/40 transition-all text-jw-text font-medium cursor-pointer">
+          <option value="">Todas las Edades</option>
+          <option value="Mayor">Mayor</option>
+          <option value="Menor">Menor</option>
+        </select>
+        <select [(ngModel)]="filtroGenero" class="bg-white border border-jw-border rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-jw-accent/30 hover:border-jw-text-secondary/40 transition-all text-jw-text font-medium cursor-pointer">
+          <option value="">Cualquier Género</option>
+          <option value="Hombre">Hombres</option>
+          <option value="Mujer">Mujeres</option>
+        </select>
+        <select [(ngModel)]="filtroPrivilegio" class="bg-white border border-jw-border rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-jw-accent/30 hover:border-jw-text-secondary/40 transition-all text-jw-text font-medium cursor-pointer">
+          <option value="">Todos los Privilegios</option>
+          <option value="Anciano">Anciano</option>
+          <option value="Siervo Ministerial">Siervo Ministerial</option>
+          <option value="Publicador">Publicador</option>
+          <option value="Publicador No Bautizado">No Bautizado</option>
+        </select>
+        <select [(ngModel)]="filtroAsignacion" class="bg-white border border-jw-border rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-jw-accent/30 hover:border-jw-text-secondary/40 transition-all text-jw-text font-medium cursor-pointer">
+          <option value="">Todas las Asignaciones</option>
+          <option value="discurso_tesoros">Tesoros: Discurso</option>
+          <option value="buscar_perlas">Tesoros: Perlas</option>
+          <option value="lectura_biblia">Tesoros: Lectura</option>
+          <option value="empiece_conversaciones">Maestros: Conversaciones</option>
+          <option value="haga_revisitas">Maestros: Revisitas</option>
+          <option value="explique_creencias">Maestros: Creencias</option>
+          <option value="discurso_estudiantil">Maestros: Discurso</option>
+          <option value="vida_cristiana">Vida Cristiana</option>
+          <option value="conductor_estudio">Conductor Estudio</option>
+          <option value="lector_estudio">Lector Estudio</option>
+          <option value="ayudante">Ayudante</option>
+        </select>
+
+        <button 
+          *ngIf="searchTerm || filtroGrupoEdad || filtroGenero || filtroPrivilegio || filtroAsignacion"
+          (click)="limpiarFiltros()"
+          class="flex items-center space-x-1.5 px-3 py-2 bg-white border border-jw-border hover:bg-red-50 hover:text-red-500 hover:border-red-200 rounded-xl text-xs font-semibold text-jw-text-secondary transition-all cursor-pointer"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          <span>Limpiar</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="participantesFiltrados.length === 0 && !isLoading" class="p-12 text-center py-20 border-2 border-dashed border-jw-border rounded-3xl space-y-4">
+    <div class="p-4 bg-jw-card border border-jw-border-light text-jw-accent rounded-2xl inline-block">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+    </div>
+    <div>
+      <h3 class="text-base font-bold text-jw-text">No hay participantes registrados</h3>
+      <p class="text-xs text-jw-text-secondary mt-1 max-w-sm mx-auto">
+        Comienza dando de alta a los hermanos de la congregación con sus correspondientes asignaciones VMC.
+      </p>
+    </div>
+    <button
+      type="button"
+      (click)="abrirCrearModal()"
+      class="px-4 py-2 bg-jw-card hover:bg-gray-200 text-jw-text border border-jw-border font-semibold text-xs rounded-xl cursor-pointer"
+    >
+      Agregar primer participante
+    </button>
+  </div>
+
+  <!-- Error feedback message -->
+  <div
+    *ngIf="errorMessage"
+    class="flex items-center space-x-2 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-sm"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span class="font-medium">{{ errorMessage }}</span>
+  </div>
+
+  <!-- Participants Card Grid -->
+  <div *ngIf="participantesFiltrados.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+    <div
+      *ngFor="let item of participantesFiltrados"
+      class="bg-white border border-jw-border-light rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"
+      [class.opacity-50]="!item.participante.activo"
+    >
+      <div>
+        <!-- Card top profile & actions -->
+        <div class="flex items-start justify-between">
+          <div class="flex items-center space-x-3">
+            <!-- Profile initial avatar circle -->
+            <div 
+              class="h-10 w-10 rounded-full flex items-center justify-center font-bold text-sm select-none border"
+              [class.bg-blue-50]="item.participante.genero === 'Hombre'"
+              [class.text-blue-600]="item.participante.genero === 'Hombre'"
+              [class.border-blue-200]="item.participante.genero === 'Hombre'"
+              [class.bg-pink-50]="item.participante.genero === 'Mujer'"
+              [class.text-pink-600]="item.participante.genero === 'Mujer'"
+              [class.border-pink-200]="item.participante.genero === 'Mujer'"
+            >
+              {{ item.participante.nombre_completo.charAt(0) }}
+            </div>
+            <div>
+              <h4 class="font-semibold text-jw-text text-sm flex items-center space-x-1.5">
+                <span>{{ item.participante.nombre_completo }}</span>
+                <span *ngIf="item.participante.condicion_especial" title="Condición Especial/Mayor" class="text-xs text-amber-500">
+                  ⚠️
+                </span>
+              </h4>
+              <span class="text-[10px] uppercase font-semibold text-jw-text-secondary tracking-wide">
+                {{ item.participante.rol }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Edit & Delete buttons -->
+          <div class="flex items-center space-x-1">
+            <button
+              type="button"
+              (click)="abrirEditarModal(item)"
+              class="p-1.5 text-jw-text-secondary hover:text-jw-text hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+              title="Editar"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              (click)="solicitarEliminacion(item.participante.id, item.participante.nombre_completo)"
+              class="p-1.5 text-jw-text-secondary hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+              title="Eliminar permanentemente"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Details / Special conditions -->
+        <div class="mt-3 text-xs text-jw-text-secondary" *ngIf="item.participante.observaciones">
+          <span class="font-semibold text-jw-text">Obs:</span> 
+          <span class="italic">"{{ item.participante.observaciones }}"</span>
+        </div>
+
+        <!-- Aptitudes Badges list -->
+        <div class="mt-4 flex flex-wrap gap-1.5">
+          <span *ngIf="item.aptitudes.discurso_tesoros" class="px-2 py-0.5 bg-sky-50 border border-sky-200 text-sky-700 text-[10px] font-semibold rounded-md">
+            Discurso (Tesoros)
+          </span>
+          <span *ngIf="item.aptitudes.buscar_perlas" class="px-2 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-semibold rounded-md">
+            Perlas
+          </span>
+          <span *ngIf="item.aptitudes.lectura_biblia" class="px-2 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-semibold rounded-md">
+            Lectura Biblia
+          </span>
+          <span *ngIf="item.aptitudes.empiece_conversaciones" class="px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-semibold rounded-md">
+            Conversaciones
+          </span>
+          <span *ngIf="item.aptitudes.haga_revisitas" class="px-2 py-0.5 bg-orange-50 border border-orange-200 text-orange-700 text-[10px] font-semibold rounded-md">
+            Revisitas
+          </span>
+          <span *ngIf="item.aptitudes.explique_creencias" class="px-2 py-0.5 bg-teal-50 border border-teal-200 text-teal-700 text-[10px] font-semibold rounded-md">
+            Creencias
+          </span>
+          <span *ngIf="item.aptitudes.discurso_estudiantil" class="px-2 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-semibold rounded-md">
+            Discurso (estudiantil)
+          </span>
+          <span *ngIf="item.aptitudes.vida_cristiana" class="px-2 py-0.5 bg-purple-50 border border-purple-200 text-purple-700 text-[10px] font-semibold rounded-md">
+            Vida Cristiana
+          </span>
+          <span *ngIf="item.aptitudes.conductor_estudio" class="px-2 py-0.5 bg-red-50 border border-red-200 text-red-600 text-[10px] font-semibold rounded-md">
+            Conductor Estudio
+          </span>
+          <span *ngIf="item.aptitudes.lector_estudio" class="px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-600 text-[10px] font-semibold rounded-md">
+            Lector de Estudio
+          </span>
+          <span *ngIf="item.aptitudes.ayudante" class="px-2 py-0.5 bg-lime-50 border border-lime-200 text-lime-700 text-[10px] font-semibold rounded-md">
+            Ayudante
+          </span>
+          
+          <span *ngIf="!item.aptitudes.discurso_tesoros && !item.aptitudes.buscar_perlas && !item.aptitudes.lectura_biblia && !item.aptitudes.empiece_conversaciones && !item.aptitudes.haga_revisitas && !item.aptitudes.explique_creencias && !item.aptitudes.discurso_estudiantil && !item.aptitudes.vida_cristiana && !item.aptitudes.conductor_estudio && !item.aptitudes.lector_estudio && !item.aptitudes.ayudante" class="text-xs text-jw-text-secondary/60 italic">
+            Sin asignaciones activas
+          </span>
+        </div>
+      </div>
+
+      <!-- Toggle Active switch at bottom of card -->
+      <div class="mt-5 border-t border-jw-border-light pt-3 flex items-center justify-between text-xs">
+        <span class="text-jw-text-secondary font-medium">
+          Estado: <span class="font-bold" [class.text-emerald-600]="item.participante.activo" [class.text-red-500]="!item.participante.activo">{{ item.participante.activo ? 'Activo' : 'Inactivo' }}</span>
+        </span>
+        <button
+          type="button"
+          (click)="toggleActivo(item)"
+          class="px-3 py-1 text-jw-text-secondary border border-jw-border rounded-lg hover:bg-gray-100 hover:text-jw-text transition-colors font-semibold cursor-pointer"
+        >
+          {{ item.participante.activo ? 'Desactivar' : 'Activar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Add/Edit Dialog Modal -->
+  <div *ngIf="showFormModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+    <!-- Overlay background with blur -->
+    <div class="fixed inset-0 bg-black/30 backdrop-blur-sm" (click)="cerrarModal()"></div>
+
+    <!-- Modal Box -->
+    <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-jw-border-light max-h-[90vh] flex flex-col">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-jw-border-light flex justify-between items-center bg-jw-bg">
+        <h3 class="font-bold text-lg text-jw-text">
+          {{ isEditing ? 'Editar Participante' : 'Nuevo Participante' }}
+        </h3>
+        <button
+          type="button"
+          (click)="cerrarModal()"
+          class="text-jw-text-secondary hover:text-jw-text p-1 rounded-lg hover:bg-gray-100 transition-all cursor-pointer"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-6 overflow-y-auto space-y-6 flex-1 text-left">
+        <!-- Form grid for core details -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <!-- Full Name -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-semibold text-jw-text-secondary">Nombre Completo</label>
+            <input
+              type="text"
+              [(ngModel)]="formParticipante.nombre_completo"
+              placeholder="Ej. Juan Pérez"
+              class="w-full bg-white border border-jw-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-jw-accent/30 focus:border-jw-accent transition-all font-medium text-jw-text"
+            />
+          </div>
+
+          <!-- Age Group -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-semibold text-jw-text-secondary">Grupo de Edad</label>
+            <select
+              [(ngModel)]="formParticipante.grupo_edad"
+              class="w-full bg-white border border-jw-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-jw-accent/30 focus:border-jw-accent transition-all font-medium text-jw-text cursor-pointer"
+            >
+              <option value="Mayor">Mayor / Adulto</option>
+              <option value="Menor">Menor de edad</option>
+            </select>
+          </div>
+
+          <!-- Gender -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-semibold text-jw-text-secondary">Género</label>
+            <select
+              [(ngModel)]="formParticipante.genero"
+              class="w-full bg-white border border-jw-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-jw-accent/30 focus:border-jw-accent transition-all font-medium text-jw-text cursor-pointer"
+            >
+              <option value="Hombre">Hombre</option>
+              <option value="Mujer">Mujer</option>
+            </select>
+          </div>
+
+          <!-- Role -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-semibold text-jw-text-secondary">Privilegio</label>
+            <select
+              name="rol"
+              [(ngModel)]="formParticipante.rol"
+              required class="w-full bg-white border border-jw-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-jw-accent/30 focus:border-jw-accent transition-all font-medium text-jw-text cursor-pointer"
+            >
+              <option value="Anciano">Anciano</option>
+              <option value="Siervo Ministerial">Siervo Ministerial</option>
+              <option value="Publicador">Publicador</option>
+              <option value="Publicador No Bautizado">Publicador No Bautizado</option>
+            </select>
+          </div>
+
+          <!-- Custom Remarks / Observations -->
+          <div class="space-y-1.5 md:col-span-2">
+            <label class="text-xs font-semibold text-jw-text-secondary">Observaciones o Limitaciones</label>
+            <input
+              type="text"
+              [(ngModel)]="formParticipante.observaciones"
+              placeholder="Ej. Horario rotativo, no asignable en días festivos, etc."
+              class="w-full bg-white border border-jw-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-jw-accent/30 focus:border-jw-accent transition-all font-medium text-jw-text"
+            />
+          </div>
+
+          <!-- Special Condition switch -->
+          <div class="flex items-center space-x-6 py-2 md:col-span-2">
+            <label class="flex items-center space-x-2.5 cursor-pointer text-sm font-medium text-jw-text select-none">
+              <input
+                type="checkbox"
+                [(ngModel)]="formParticipante.condicion_especial"
+                class="rounded border-jw-border text-jw-accent focus:ring-jw-accent h-4 w-4 cursor-pointer"
+              />
+              <span>Condición Especial (Mayor / Limitaciones de Salud)</span>
+            </label>
+          </div>
+        </div>
+
+        <hr class="border-jw-border-light" />
+
+        <!-- Seccion: Asignaciones -->
+        <div class="border-t border-jw-border-light pt-6">
+          <div class="mb-4">
+            <h3 class="text-lg font-bold text-jw-text">Asignaciones</h3>
+            <p class="text-xs text-jw-text-secondary">
+              Marca las partes del programa en las que este hermano(a) tiene permitido participar.
+            </p>
+          </div>
+
+          <!-- Category: Tesoros de la Biblia -->
+          <div class="mb-6">
+            <h4 class="text-xs font-bold text-jw-accent mb-3 uppercase tracking-wider">Tesoros de la Biblia</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group" [class.opacity-40]="formParticipante.genero !== 'Hombre'">
+                <div class="flex items-center h-5">
+                  <input type="checkbox" [disabled]="formParticipante.genero !== 'Hombre'" [(ngModel)]="formAptitudes.discurso_tesoros" class="w-4.5 h-4.5 border-jw-border rounded text-sky-500 focus:ring-sky-500 disabled:cursor-not-allowed">
+                </div>
+                <div class="ml-3 text-sm">
+                  <span class="font-semibold text-jw-text group-hover:text-jw-text transition-colors block text-xs">Discurso (Tesoros)</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="formParticipante.genero !== 'Hombre'">Discurso 10 min. Solo varones.</span>
+                </div>
+              </label>
+              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group" [class.opacity-40]="formParticipante.genero !== 'Hombre'">
+                <div class="flex items-center h-5">
+                  <input type="checkbox" [disabled]="formParticipante.genero !== 'Hombre'" [(ngModel)]="formAptitudes.buscar_perlas" class="w-4.5 h-4.5 border-jw-border rounded text-emerald-500 focus:ring-emerald-500 disabled:cursor-not-allowed">
+                </div>
+                <div class="ml-3 text-sm">
+                  <span class="font-semibold text-jw-text group-hover:text-jw-text transition-colors block text-xs">Busquemos perlas escondidas</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="formParticipante.genero !== 'Hombre'">Conductor de Perlas. Solo varones.</span>
+                </div>
+              </label>
+              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group" [class.opacity-40]="formParticipante.genero !== 'Hombre'">
+                <div class="flex items-center h-5">
+                  <input type="checkbox" [disabled]="formParticipante.genero !== 'Hombre'" [(ngModel)]="formAptitudes.lectura_biblia" class="w-4.5 h-4.5 border-jw-border rounded text-blue-500 focus:ring-blue-500 disabled:cursor-not-allowed">
+                </div>
+                <div class="ml-3 text-sm">
+                  <span class="font-semibold text-jw-text group-hover:text-jw-text transition-colors block text-xs">Lectura de la Biblia</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="formParticipante.genero !== 'Hombre'">Lectura semanal. Solo varones.</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Category: Seamos mejores maestros -->
+          <div class="mb-6 border-t border-jw-border-light pt-5">
+            <h4 class="text-xs font-bold text-jw-accent mb-3 uppercase tracking-wider">Seamos mejores maestros</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group">
+                <div class="flex items-center h-5">
+                  <input type="checkbox" [(ngModel)]="formAptitudes.empiece_conversaciones" class="w-4.5 h-4.5 border-jw-border rounded text-amber-500 focus:ring-amber-500">
+                </div>
+                <div class="ml-3 text-sm">
+                  <span class="font-semibold text-jw-text block text-xs">Empiece conversaciones</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5">Primera conversación</span>
+                </div>
+              </label>
+              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group">
+                <div class="flex items-center h-5">
+                  <input type="checkbox" [(ngModel)]="formAptitudes.haga_revisitas" class="w-4.5 h-4.5 border-jw-border rounded text-orange-500 focus:ring-orange-500">
+                </div>
+                <div class="ml-3 text-sm">
+                  <span class="font-semibold text-jw-text block text-xs">Haga revisitas</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5">Asignación de revisita</span>
+                </div>
+              </label>
+              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group">
+                <div class="flex items-center h-5">
+                  <input type="checkbox" [(ngModel)]="formAptitudes.haga_discipulos" class="w-4.5 h-4.5 border-jw-border rounded text-rose-500 focus:ring-rose-500">
+                </div>
+                <div class="ml-3 text-sm">
+                  <span class="font-semibold text-jw-text block text-xs">Haga discípulos</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5">Curso bíblico</span>
+                </div>
+              </label>
+              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group">
+                <div class="flex items-center h-5">
+                  <input type="checkbox" [(ngModel)]="formAptitudes.explique_creencias" class="w-4.5 h-4.5 border-jw-border rounded text-teal-500 focus:ring-teal-500">
+                </div>
+                <div class="ml-3 text-sm">
+                  <span class="font-semibold text-jw-text block text-xs">Explique sus creencias</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5">Asignación de creencias</span>
+                </div>
+              </label>
+              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group">
+                <div class="flex items-center h-5">
+                  <input type="checkbox" [(ngModel)]="formAptitudes.que_diria" class="w-4.5 h-4.5 border-jw-border rounded text-cyan-500 focus:ring-cyan-500">
+                </div>
+                <div class="ml-3 text-sm">
+                  <span class="font-semibold text-jw-text block text-xs">¿Qué diría?</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5">Demostración (solo adultos)</span>
+                </div>
+              </label>
+              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group" [class.opacity-40]="formParticipante.genero !== 'Hombre'">
+                <div class="flex items-center h-5">
+                  <input type="checkbox" [disabled]="formParticipante.genero !== 'Hombre'" [(ngModel)]="formAptitudes.discurso_estudiantil" class="w-4.5 h-4.5 border-jw-border rounded text-indigo-500 focus:ring-indigo-500 disabled:cursor-not-allowed">
+                </div>
+                <div class="ml-3 text-sm">
+                  <span class="font-semibold text-jw-text group-hover:text-jw-text transition-colors block text-xs">Discurso (Maestros)</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="formParticipante.genero !== 'Hombre'">Discurso 5 min. Solo varones.</span>
+                </div>
+              </label>
+              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group">
+                <div class="flex items-center h-5">
+                  <input type="checkbox" [(ngModel)]="formAptitudes.ayudante" class="w-4.5 h-4.5 border-jw-border rounded text-lime-500 focus:ring-lime-500">
+                </div>
+                <div class="ml-3 text-sm">
+                  <span class="font-semibold text-jw-text block text-xs">Ayudante</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5">Apto para acompañar como ayudante</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Category: Nuestra vida cristiana -->
+          <div class="border-t border-jw-border-light pt-5">
+            <h4 class="text-xs font-bold text-jw-accent mb-3 uppercase tracking-wider">Nuestra vida cristiana</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group" [class.opacity-40]="formParticipante.genero !== 'Hombre'">
+                <div class="flex items-center h-5">
+                  <input type="checkbox" [disabled]="formParticipante.genero !== 'Hombre'" [(ngModel)]="formAptitudes.vida_cristiana" class="w-4.5 h-4.5 border-jw-border rounded text-purple-500 focus:ring-purple-500 disabled:cursor-not-allowed">
+                </div>
+                <div class="ml-3 text-sm">
+                  <span class="font-semibold text-jw-text block text-xs">Nuestra vida cristiana</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="formParticipante.genero !== 'Hombre'">Partes de la sección. Solo varones.</span>
+                </div>
+              </label>
+              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group" [class.opacity-40]="formParticipante.genero !== 'Hombre'">
+                <div class="flex items-center h-5">
+                  <input type="checkbox" [disabled]="formParticipante.genero !== 'Hombre'" [(ngModel)]="formAptitudes.conductor_estudio" class="w-4.5 h-4.5 border-jw-border rounded text-red-500 focus:ring-red-500 disabled:cursor-not-allowed">
+                </div>
+                <div class="ml-3 text-sm">
+                  <span class="font-semibold text-jw-text block text-xs">Conductor de Estudio</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="formParticipante.genero !== 'Hombre'">Conductor del EBC. Solo varones.</span>
+                </div>
+              </label>
+              <label class="relative flex items-center p-3 rounded-2xl border border-jw-border-light bg-jw-card/50 hover:bg-jw-card cursor-pointer transition-colors group" [class.opacity-40]="formParticipante.genero !== 'Hombre'">
+                <div class="flex items-center h-5">
+                  <input type="checkbox" [disabled]="formParticipante.genero !== 'Hombre'" [(ngModel)]="formAptitudes.lector_estudio" class="w-4.5 h-4.5 border-jw-border rounded text-amber-500 focus:ring-amber-500 disabled:cursor-not-allowed">
+                </div>
+                <div class="ml-3 text-sm">
+                  <span class="font-semibold text-jw-text block text-xs">Lector de Estudio</span>
+                  <span class="text-[10px] text-jw-text-secondary leading-tight block mt-0.5" [class.text-red-500]="formParticipante.genero !== 'Hombre'">Lector del EBC. Solo varones.</span>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-4 border-t border-jw-border-light flex justify-end items-center space-x-3 bg-jw-bg">
+        <button
+          type="button"
+          (click)="cerrarModal()"
+          class="px-4 py-2 bg-jw-card hover:bg-gray-200 text-jw-text font-semibold text-xs rounded-xl transition-all cursor-pointer border border-jw-border"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="guardar()"
+          class="px-5 py-2 bg-jw-accent hover:bg-jw-accent-hover text-white font-semibold text-xs rounded-xl shadow-sm transition-all cursor-pointer"
+        >
+          Guardar Registro
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Custom Styled Delete Confirmation Modal -->
+  <div *ngIf="showDeleteConfirmModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+    <!-- Overlay with blur -->
+    <div class="fixed inset-0 bg-black/30 backdrop-blur-sm" (click)="cancelarEliminacion()"></div>
+    
+    <!-- Modal container -->
+    <div class="relative bg-white border border-jw-border-light rounded-3xl shadow-2xl w-full max-w-md overflow-hidden p-6 text-center space-y-4">
+      <!-- Warning Icon -->
+      <div class="mx-auto h-12 w-12 bg-red-50 text-red-500 border border-red-200 rounded-2xl flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      
+      <div class="space-y-2">
+        <h3 class="font-bold text-lg text-jw-text">¿Confirmar eliminación?</h3>
+        <p class="text-xs text-jw-text-secondary leading-relaxed">
+          ¿Estás seguro de que deseas eliminar permanentemente a <span class="font-bold text-jw-text">"{{ nameToDelete }}"</span>? Esta acción borrará todas sus asignaciones y su historial asociado, y no se puede deshacer.
+        </p>
+      </div>
+      
+      <!-- Action buttons -->
+      <div class="flex items-center justify-center space-x-3 pt-2">
+        <button
+          type="button"
+          (click)="cancelarEliminacion()"
+          class="px-4 py-2.5 bg-jw-card hover:bg-gray-200 text-jw-text font-semibold text-xs rounded-xl transition-all cursor-pointer border border-jw-border"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="confirmarEliminacion()"
+          class="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold text-xs rounded-xl shadow-sm transition-all cursor-pointer"
+        >
+          Sí, eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
