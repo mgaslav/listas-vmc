@@ -247,9 +247,10 @@ export class AdministracionParticipantesComponent implements OnInit {
       ];
       if (!allowed.includes(aptitud)) return false;
     } else if (r === 'Publicador No Bautizado') {
-      // “Publicador no bautizado”: Todas las asignaciones de seamos mejores maestros, menos “¿Qué diría?”.
+      // “Publicador no bautizado”: Todas las asignaciones de seamos mejores maestros, menos “¿Qué diría?”, más “Lectura de la Biblia” de la sección Tesoros de la Biblia.
       const isMaestros = ['empiece_conversaciones', 'haga_revisitas', 'haga_discipulos', 'explique_creencias', 'discurso_estudiantil', 'ayudante'].includes(aptitud);
-      if (!isMaestros || aptitud === 'que_diria') return false;
+      const isBibliaReading = aptitud === 'lectura_biblia';
+      if ((!isMaestros && !isBibliaReading) || aptitud === 'que_diria') return false;
     }
 
     return true;

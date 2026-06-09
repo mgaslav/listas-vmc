@@ -1,10 +1,10 @@
 <div class="min-h-screen bg-white text-jw-text flex flex-col transition-colors duration-300">
   
-  <!-- Modern Header — Apple-style -->
-  <header class="w-full backdrop-blur-xl bg-jw-bg/80 border-b border-jw-border-light sticky top-0 z-50">
+  <!-- Modern Header — Apple-style (Only visible when authenticated) -->
+  <header *ngIf="isAuthenticated" class="w-full backdrop-blur-xl bg-jw-bg/80 border-b border-jw-border-light sticky top-0 z-50 animate-fade-in">
     <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
       <!-- Logo/Brand -->
-      <div class="flex items-center space-x-3 cursor-pointer select-none" (click)="activeTab = 'planificador'; resetFlow()">
+      <div class="flex items-center space-x-3 cursor-pointer select-none" routerLink="/planificador">
         <div class="h-8 w-8 bg-jw-accent rounded-xl flex items-center justify-center text-white shadow-sm">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" viewBox="0 0 20 20" fill="currentColor">
             <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
@@ -20,167 +20,42 @@
       <nav class="flex items-center space-x-1 bg-jw-card p-1 rounded-xl border border-jw-border-light">
         <button
           type="button"
-          (click)="activeTab = 'planificador'"
-          class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-          [class.bg-white]="activeTab === 'planificador'"
-          [class.shadow-sm]="activeTab === 'planificador'"
-          [class.text-jw-text]="activeTab === 'planificador'"
-          [class.text-jw-text-secondary]="activeTab !== 'planificador'"
-          [class.hover:text-jw-text]="activeTab !== 'planificador'"
+          routerLink="/planificador"
+          routerLinkActive="bg-white shadow-sm text-jw-text"
+          [routerLinkActiveOptions]="{exact: true}"
+          class="px-4 py-1.5 rounded-lg text-xs font-semibold text-jw-text-secondary hover:text-jw-text transition-all cursor-pointer"
         >
           Planificador VMC
         </button>
         <button
           type="button"
-          (click)="activeTab = 'participantes'"
-          class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-          [class.bg-white]="activeTab === 'participantes'"
-          [class.shadow-sm]="activeTab === 'participantes'"
-          [class.text-jw-text]="activeTab === 'participantes'"
-          [class.text-jw-text-secondary]="activeTab !== 'participantes'"
-          [class.hover:text-jw-text]="activeTab !== 'participantes'"
+          routerLink="/participantes"
+          routerLinkActive="bg-white shadow-sm text-jw-text"
+          class="px-4 py-1.5 rounded-lg text-xs font-semibold text-jw-text-secondary hover:text-jw-text transition-all cursor-pointer"
         >
           Participantes
         </button>
       </nav>
 
-      <!-- Spacer to keep navigation centered -->
-      <div class="w-36 hidden sm:block"></div>
+      <!-- Logout Action -->
+      <div class="flex items-center space-x-3">
+        <button
+          type="button"
+          (click)="logout()"
+          class="px-3.5 py-1.5 border border-jw-border bg-jw-card hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-jw-text-secondary font-semibold text-xs rounded-xl transition-all cursor-pointer flex items-center space-x-1.5"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          <span class="hidden sm:inline">Cerrar Sesión</span>
+        </button>
+      </div>
     </div>
   </header>
 
   <!-- Main Container -->
-  <main class="flex-1 max-w-6xl w-full mx-auto px-6 py-10 flex flex-col justify-center animate-fade-in">
-
-    <!-- Planificador Tab -->
-    <ng-container *ngIf="activeTab === 'planificador'">
-      <!-- Upload Step -->
-      <div *ngIf="step === 'upload'" class="space-y-12">
-        <div class="text-center space-y-3 max-w-2xl mx-auto">
-          <span class="px-3 py-1 bg-jw-accent/10 text-jw-accent text-xs font-semibold rounded-full uppercase tracking-wider">
-            Asignaciones de la Reunión VMC
-          </span>
-          <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-jw-text leading-tight">
-            Automatiza tu programa semanal
-          </h1>
-          <p class="text-base text-jw-text-secondary font-medium">
-            Carga el PDF de la Guía de Actividades. Extraeremos las secciones del programa y asignaremos los candidatos disponibles.
-          </p>
-        </div>
-
-        <!-- Error feedback message -->
-        <div
-          *ngIf="errorMessage"
-          class="flex items-center space-x-3 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-sm max-w-2xl mx-auto animate-fade-in text-left"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div>
-            <span class="font-semibold block text-red-800 text-xs">Error al procesar el programa:</span>
-            <span class="text-xs text-red-600 mt-0.5 block">{{ errorMessage }}</span>
-          </div>
-        </div>
-
-        <app-carga-pdf
-          (fileSelected)="onFileSelected($event)"
-          (startProcessing)="onStartProcessing()"
-        ></app-carga-pdf>
-      </div>
-
-      <!-- Processing Step -->
-      <div *ngIf="step === 'processing'" class="flex flex-col items-center justify-center space-y-6 py-20">
-        <div class="relative flex items-center justify-center">
-          <!-- Pulse circles -->
-          <div class="absolute h-24 w-24 bg-jw-accent/10 rounded-full animate-ping"></div>
-          <div class="absolute h-16 w-16 bg-jw-accent/15 rounded-full animate-pulse"></div>
-          
-          <div class="h-12 w-12 rounded-2xl bg-jw-accent flex items-center justify-center text-white shadow-lg shadow-jw-accent/20">
-            <svg class="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          </div>
-        </div>
-        <div class="text-center space-y-2">
-          <h3 class="text-lg font-semibold text-jw-text">
-            Analizando y extrayendo partes del programa...
-          </h3>
-          <p class="text-sm text-jw-text-secondary max-w-sm">
-            Estamos procesando el texto del PDF y buscando los mejores candidatos aptos en tu base de datos.
-          </p>
-        </div>
-      </div>
-
-      <!-- Preview Step -->
-      <div *ngIf="step === 'preview'">
-        <app-previsualizacion-semanal
-          [semanas]="semanas"
-          [candidatos]="candidatos"
-          (saveProgram)="onSaveProgram($event)"
-          (cancel)="resetFlow()"
-        ></app-previsualizacion-semanal>
-      </div>
-
-      <!-- Success Step -->
-      <div *ngIf="step === 'success'" class="flex flex-col items-center justify-center space-y-6 py-16 text-center max-w-md mx-auto">
-        <div class="h-16 w-16 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center shadow-sm border border-emerald-200">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <div class="space-y-2">
-          <h2 class="text-2xl font-bold text-jw-text">¡Programa Guardado Exitosamente!</h2>
-          <p class="text-sm text-jw-text-secondary font-medium">
-            {{ successMessage }}
-          </p>
-        </div>
-        <button
-          type="button"
-          (click)="resetFlow()"
-          class="px-6 py-2.5 bg-jw-accent hover:bg-jw-accent-hover text-white font-semibold text-sm rounded-2xl shadow-sm transition-all cursor-pointer"
-        >
-          Subir otra Guía
-        </button>
-      </div>
-
-      <!-- Error Step / Database Error Screen -->
-      <div *ngIf="step === 'error'" class="flex flex-col items-center justify-center space-y-6 py-16 text-center max-w-md mx-auto">
-        <div class="h-16 w-16 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center shadow-sm border border-red-200">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-        </div>
-        <div class="space-y-2">
-          <h2 class="text-2xl font-bold text-jw-text">Fallo de Conexión o Guardado</h2>
-          <p class="text-sm text-red-600 font-medium font-mono text-xs p-3 bg-red-50 border border-red-200 rounded-xl">
-            {{ errorMessage }}
-          </p>
-        </div>
-        <div class="flex items-center space-x-3">
-          <button
-            type="button"
-            (click)="resetFlow()"
-            class="px-5 py-2.5 bg-jw-card hover:bg-gray-200 text-jw-text font-semibold text-sm rounded-2xl transition-all cursor-pointer border border-jw-border"
-          >
-            Regresar a Carga
-          </button>
-          <button
-            type="button"
-            (click)="step = 'preview'; errorMessage = null"
-            class="px-6 py-2.5 bg-jw-accent hover:bg-jw-accent-hover text-white font-semibold text-sm rounded-2xl transition-all cursor-pointer"
-          >
-            Reintentar Guardado
-          </button>
-        </div>
-      </div>
-    </ng-container>
-
-    <!-- Panel de Participantes Tab -->
-    <ng-container *ngIf="activeTab === 'participantes'">
-      <app-administracion-participantes></app-administracion-participantes>
-    </ng-container>
-
+  <main class="flex-1 max-w-6xl w-full mx-auto px-6 py-10 flex flex-col justify-center">
+    <router-outlet></router-outlet>
   </main>
 
   <!-- Footer -->

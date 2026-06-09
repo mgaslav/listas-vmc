@@ -26,6 +26,25 @@ export class SupabaseService {
   }
 
   /**
+   * Supabase Authentication Methods
+   */
+  async login(email: string, password: string) {
+    return await this.supabase.auth.signInWithPassword({ email, password });
+  }
+
+  async logout() {
+    return await this.supabase.auth.signOut();
+  }
+
+  async getSession() {
+    return await this.supabase.auth.getSession();
+  }
+
+  onAuthStateChange(callback: (event: any, session: any) => void) {
+    return this.supabase.auth.onAuthStateChange(callback);
+  }
+
+  /**
    * Obtiene todos los participantes activos con sus correspondientes aptitudes
    */
   async getParticipantesConAptitudes(): Promise<{ participante: Participante; aptitudes: AptitudesParticipante }[]> {
